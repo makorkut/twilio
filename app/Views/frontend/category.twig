@@ -1,0 +1,92 @@
+{% extends "layouts/base.twig" %}
+
+{% block content %}
+<section class="category-hero">
+    <div class="container">
+        <h1 class="category-hero__title">{{ category.name }}</h1>
+        {% if category.description %}
+        <p class="category-hero__description">{{ category.description }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="category-products">
+    <div class="container">
+        <div class="category-products__header">
+            <div class="category-products__count">
+                {{ t('products.showing') }}: {{ products|length }} {{ t('products.products') }}
+            </div>
+
+            <div class="category-products__filters">
+                <select name="sort" class="filter-select">
+                    <option value="newest">{{ t('products.sort.newest') }}</option>
+                    <option value="price_low">{{ t('products.sort.price_low') }}</option>
+                    <option value="price_high">{{ t('products.sort.price_high') }}</option>
+                    <option value="name">{{ t('products.sort.name') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="product-grid">
+            {% for product in products %}
+            <article class="product-card">
+                <a href="/{{ current_lang }}/{{ category.slug }}/{{ product.slug }}" class="product-card__link">
+                    {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}" class="product-card__image" loading="lazy">
+                    {% else %}
+                    <div class="product-card__image product-card__image--placeholder"></div>
+                    {% endif %}
+
+                    <div class="product-card__content">
+                        <h3 class="product-card__title">{{ product.name }}</h3>
+
+                        {% if product.short_description %}
+                        <p class="product-card__description">{{ product.short_description|slice(0, 100) }}...</p>
+                        {% endif %}
+
+                        <div class="product-card__footer">
+                            {% if product.base_price %}
+                            <div class="product-card__price-wrapper">
+                                {% if product.compare_at_price and product.compare_at_price > product.base_price %}
+                                <span class="product-card__price product-card__price--old">
+                                    {{ format_price(product.compare_at_price, current_currency) }}
+                                </span>
+                                {% endif %}
+                                <span class="product-card__price">
+                                    {{ format_price(product.base_price, current_currency) }}
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            <button
+                                class="btn btn--primary btn--sm"
+                                data-add-to-cart
+                                data-product-id="{{ product.id }}"
+                                data-quantity="1">
+                                {{ t('products.add_to_cart') }}
+                            </button>
+                        </div>
+                    </div>
+                </a>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% if pages > 1 %}
+        <nav class="pagination">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}" class="pagination__link">{{ t('pagination.previous') }}</a>
+            {% endif %}
+
+            {% for p in 1..pages %}
+            <a href="?page={{ p }}" class="pagination__link {{ p == page ? 'active' : '' }}">{{ p }}</a>
+            {% endfor %}
+
+            {% if page < pages %}
+            <a href="?page={{ page + 1 }}" class="pagination__link">{{ t('pagination.next') }}</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

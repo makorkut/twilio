@@ -1,0 +1,199 @@
+{% extends "layouts/base.twig" %}
+
+{% block content %}
+<section class="product-detail">
+    <div class="container">
+        <div class="product-detail__grid">
+            <!-- Product Images -->
+            <div class="product-detail__images">
+                <div class="product-gallery">
+                    {% if product.images %}
+                    <div class="product-gallery__main">
+                        <img src="{{ product.images[0].url }}" alt="{{ product.name }}" class="product-gallery__image" id="mainImage">
+                    </div>
+
+                    {% if product.images|length > 1 %}
+                    <div class="product-gallery__thumbnails">
+                        {% for image in product.images %}
+                        <img
+                            src="{{ image.thumbnail }}"
+                            alt="{{ product.name }}"
+                            class="product-gallery__thumbnail"
+                            data-full-url="{{ image.url }}"
+                            onclick="changeMainImage('{{ image.url }}')">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="product-gallery__placeholder"></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-detail__info">
+                <h1 class="product-detail__title">{{ product.name }}</h1>
+
+                {% if product.sku %}
+                <div class="product-detail__sku">
+                    {{ t('products.sku') }}: <strong>{{ product.sku }}</strong>
+                </div>
+                {% endif %}
+
+                {% if product.base_price %}
+                <div class="product-detail__price">
+                    {% if product.compare_at_price and product.compare_at_price > product.base_price %}
+                    <span class="product-detail__price--old">
+                        {{ format_price(product.compare_at_price, current_currency) }}
+                    </span>
+                    {% endif %}
+                    <span class="product-detail__price--current">
+                        {{ format_price(product.base_price, current_currency) }}
+                    </span>
+                </div>
+                {% endif %}
+
+                <!-- Tier Pricing -->
+                {% if product.tier_1_min_qty %}
+                <div class="product-detail__tier-pricing">
+                    <h3>{{ t('products.bulk_pricing') }}</h3>
+                    <ul class="tier-pricing-list">
+                        {% if product.tier_1_min_qty %}
+                        <li>{{ product.tier_1_min_qty }}+ {{ t('products.units') }}: {{ format_price(product.tier_1_price, current_currency) }}</li>
+                        {% endif %}
+                        {% if product.tier_2_min_qty %}
+                        <li>{{ product.tier_2_min_qty }}+ {{ t('products.units') }}: {{ format_price(product.tier_2_price, current_currency) }}</li>
+                        {% endif %}
+                        {% if product.tier_3_min_qty %}
+                        <li>{{ product.tier_3_min_qty }}+ {{ t('products.units') }}: {{ format_price(product.tier_3_price, current_currency) }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if product.short_description %}
+                <div class="product-detail__short-description">
+                    <p>{{ product.short_description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Add to Cart Form -->
+                <form class="product-detail__form" id="addToCartForm">
+                    <div class="quantity-selector">
+                        <label for="quantity">{{ t('products.quantity') }}:</label>
+                        <input
+                            type="number"
+                            id="quantity"
+                            name="quantity"
+                            value="1"
+                            min="1"
+                            class="quantity-selector__input">
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn--primary btn--large"
+                        data-add-to-cart
+                        data-product-id="{{ product.id }}"
+                        data-quantity="1"
+                        id="addToCartBtn">
+                        {{ t('products.add_to_cart') }}
+                    </button>
+                </form>
+
+                <!-- Product Meta -->
+                <div class="product-detail__meta">
+                    {% if product.stock_status == 'in_stock' %}
+                    <div class="product-meta__item">
+                        <strong>{{ t('products.availability') }}:</strong>
+                        <span class="text-success">{{ t('products.in_stock') }}</span>
+                    </div>
+                    {% else %}
+                    <div class="product-meta__item">
+                        <strong>{{ t('products.availability') }}:</strong>
+                        <span class="text-danger">{{ t('products.out_of_stock') }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if product.length_mm or product.width_mm or product.height_mm %}
+                    <div class="product-meta__item">
+                        <strong>{{ t('products.dimensions') }}:</strong>
+                        {{ product.length_mm }}x{{ product.width_mm }}x{{ product.height_mm }} mm
+                    </div>
+                    {% endif %}
+
+                    {% if product.weight_grams %}
+                    <div class="product-meta__item">
+                        <strong>{{ t('products.weight') }}:</strong>
+                        {{ product.weight_grams / 1000 }} kg
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Tabs -->
+        <div class="product-tabs">
+            <div class="product-tabs__nav">
+                <button class="product-tabs__tab active" data-tab="description">
+                    {{ t('products.description') }}
+                </button>
+                {% if product.technical_specs %}
+                <button class="product-tabs__tab" data-tab="specs">
+                    {{ t('products.technical_specs') }}
+                </button>
+                {% endif %}
+                {% if product.application_areas %}
+                <button class="product-tabs__tab" data-tab="applications">
+                    {{ t('products.applications') }}
+                </button>
+                {% endif %}
+            </div>
+
+            <div class="product-tabs__content">
+                <div class="product-tabs__panel active" id="description">
+                    {{ product.description|raw }}
+                </div>
+
+                {% if product.technical_specs %}
+                <div class="product-tabs__panel" id="specs">
+                    {{ product.technical_specs|raw }}
+                </div>
+                {% endif %}
+
+                {% if product.application_areas %}
+                <div class="product-tabs__panel" id="applications">
+                    {{ product.application_areas|raw }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function changeMainImage(url) {
+    document.getElementById('mainImage').src = url;
+}
+
+// Tab functionality
+document.querySelectorAll('.product-tabs__tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        const targetId = this.dataset.tab;
+
+        // Remove active from all tabs and panels
+        document.querySelectorAll('.product-tabs__tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.product-tabs__panel').forEach(p => p.classList.remove('active'));
+
+        // Add active to clicked tab and corresponding panel
+        this.classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+    });
+});
+
+// Update cart button quantity
+document.getElementById('quantity').addEventListener('change', function() {
+    document.getElementById('addToCartBtn').dataset.quantity = this.value;
+});
+</script>
+{% endblock %}

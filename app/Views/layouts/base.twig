@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ meta_description ?? '' }}">
+    <title>{{ title ?? 'Polyurethane Products' }} - {{ site_name ?? 'E-Commerce' }}</title>
+
+    <!-- SEO -->
+    <meta property="og:title" content="{{ og_title ?? title ?? '' }}">
+    <meta property="og:description" content="{{ og_description ?? meta_description ?? '' }}">
+    <meta property="og:image" content="{{ og_image ?? '' }}">
+    <meta property="og:url" content="{{ canonical_url ?? '' }}">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ canonical_url ?? '' }}">
+
+    <!-- Alternate languages -->
+    {% for lang_code, url in alternate_urls %}
+    <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+    {% endfor %}
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header__top">
+            <div class="container">
+                <div class="header__top-content">
+                    <div class="language-selector">
+                        {% for language in available_languages %}
+                        <a href="{{ language.url }}" class="language-selector__link {{ language.code == current_lang ? 'active' : '' }}">
+                            {{ language.code|upper }}
+                        </a>
+                        {% endfor %}
+                    </div>
+
+                    <div class="currency-selector">
+                        {% for currency in available_currencies %}
+                        <a href="?currency={{ currency.code }}" class="currency-selector__link {{ currency.code == current_currency ? 'active' : '' }}">
+                            {{ currency.code }}
+                        </a>
+                        {% endfor %}
+                    </div>
+
+                    <div class="user-actions">
+                        {% if user %}
+                        <a href="/account">{{ user.name }}</a>
+                        <a href="/logout">{{ t('auth.logout') }}</a>
+                        {% else %}
+                        <a href="/login">{{ t('auth.login') }}</a>
+                        <a href="/register">{{ t('auth.register') }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header__main">
+            <div class="container">
+                <a href="/" class="header__logo">{{ site_name ?? 'Polyurethane' }}</a>
+
+                <nav class="nav">
+                    <ul class="nav__list">
+                        <li class="nav__item">
+                            <a href="/" class="nav__link">{{ t('nav.home') }}</a>
+                        </li>
+                        <li class="nav__item">
+                            <a href="/products" class="nav__link">{{ t('nav.products') }}</a>
+                        </li>
+                        <li class="nav__item">
+                            <a href="/projects" class="nav__link">{{ t('nav.projects') }}</a>
+                        </li>
+                        <li class="nav__item">
+                            <a href="/about" class="nav__link">{{ t('nav.about') }}</a>
+                        </li>
+                        <li class="nav__item">
+                            <a href="/contact" class="nav__link">{{ t('nav.contact') }}</a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="header__actions">
+                    <a href="/search" class="header__search">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </a>
+
+                    <a href="/cart" class="header__cart">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M1 1h3l2 12h10l3-8H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="8" cy="18" r="1" fill="currentColor"/>
+                            <circle cx="16" cy="18" r="1" fill="currentColor"/>
+                        </svg>
+                        <span class="header__cart-count" data-cart-count>0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__content">
+                <div class="footer__section">
+                    <h3 class="footer__title">{{ t('footer.about') }}</h3>
+                    <p>{{ site_description ?? '' }}</p>
+                </div>
+
+                <div class="footer__section">
+                    <h3 class="footer__title">{{ t('footer.quick_links') }}</h3>
+                    <a href="/products" class="footer__link">{{ t('nav.products') }}</a>
+                    <a href="/projects" class="footer__link">{{ t('nav.projects') }}</a>
+                    <a href="/contact" class="footer__link">{{ t('nav.contact') }}</a>
+                </div>
+
+                <div class="footer__section">
+                    <h3 class="footer__title">{{ t('footer.support') }}</h3>
+                    <a href="/faq" class="footer__link">{{ t('footer.faq') }}</a>
+                    <a href="/shipping" class="footer__link">{{ t('footer.shipping') }}</a>
+                    <a href="/returns" class="footer__link">{{ t('footer.returns') }}</a>
+                </div>
+
+                <div class="footer__section">
+                    <h3 class="footer__title">{{ t('footer.contact') }}</h3>
+                    <p>{{ contact_email ?? '' }}</p>
+                    <p>{{ contact_phone ?? '' }}</p>
+                </div>
+            </div>
+
+            <div class="footer__bottom">
+                <p>&copy; {{ "now"|date("Y") }} {{ site_name ?? 'E-Commerce' }}. {{ t('footer.rights_reserved') }}</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/assets/js/cart.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

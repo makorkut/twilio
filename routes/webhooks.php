@@ -2,18 +2,16 @@
 
 /**
  * Webhook Routes
+ *
+ * These endpoints receive webhooks from external systems
  */
 
 use App\Http\Response;
+use App\Controllers\Webhooks\WebhookController;
 
-$router->post('/webhooks/local-crm/products', function() {
-    return Response::json(['message' => 'Webhook received']);
-});
+// Local CRM webhook receiver
+$router->post('/webhooks/local-crm', [WebhookController::class, 'localCrm']);
 
-$router->post('/webhooks/stripe', function() {
-    return Response::json(['message' => 'Stripe webhook received']);
-});
-
-$router->post('/webhooks/iyzico', function() {
-    return Response::json(['message' => 'İyzico webhook received']);
-});
+// Payment gateway webhooks
+$router->post('/webhooks/stripe', [WebhookController::class, 'stripe']);
+$router->post('/webhooks/iyzico', [WebhookController::class, 'iyzico']);
