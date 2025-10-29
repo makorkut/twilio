@@ -1,0 +1,39 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Vendor
+/vendor/
+
+# Cache
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Compiled CSS
+/public/assets/css/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*~
