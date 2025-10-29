@@ -31,28 +31,9 @@ class Application
      */
     protected function registerCoreServices(): void
     {
-        // Database
-        $this->container->singleton(Database::class, function() {
-            return new Database([
-                'host' => env('DB_HOST'),
-                'port' => env('DB_PORT', 3306),
-                'database' => env('DB_DATABASE'),
-                'username' => env('DB_USERNAME'),
-                'password' => env('DB_PASSWORD'),
-                'charset' => env('DB_CHARSET', 'utf8mb4'),
-                'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            ]);
-        });
-
-        // Router
-        $this->container->singleton(Router::class, function() {
-            return new Router();
-        });
-
-        // Request
-        $this->container->singleton(Request::class, function() {
-            return Request::createFromGlobals();
-        });
+        // Load service registrations from bootstrap
+        $bootstrap = require APP_PATH . '/bootstrap.php';
+        $bootstrap($this->container);
     }
 
     /**
