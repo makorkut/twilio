@@ -34,10 +34,12 @@ if ($_ENV['APP_DEBUG'] === 'true') {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');
 
-    // Use Whoops for better error display
-    $whoops = new \Whoops\Run;
-    $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
-    $whoops->register();
+    // Use Whoops for better error display (if available)
+    if (class_exists('\Whoops\Run')) {
+        $whoops = new \Whoops\Run;
+        $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
+        $whoops->register();
+    }
 } else {
     error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
     ini_set('display_errors', '0');
