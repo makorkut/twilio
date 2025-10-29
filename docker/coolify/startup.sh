@@ -187,29 +187,34 @@ display_info() {
 
 # Main execution
 main() {
-    # Wait for database
-    if ! wait_for_database; then
-        echo "⚠️  Warning: Could not connect to database, but continuing anyway..."
-        echo "   Make sure database service is running and environment variables are correct"
-    fi
-
-    # Create .env file
+    # Create .env file immediately (don't wait for database)
     create_env_file
-
-    # Run migrations (only once)
-    run_migrations
 
     # Set permissions
     set_permissions
 
-    # Clear caches
-    clear_caches
-
     # Display info
     display_info
 
-    # Start supervisor (Nginx + PHP-FPM + Worker)
+    # Start supervisor (Nginx + PHP-FPM + Worker) IMMEDIATELY
     echo "🎬 Starting services with Supervisor..."
+    echo "   (Database migrations will run in background)"
+
+    # Run database setup in background
+    (
+        # Wait for database
+        if wait_for_database; then
+            echo "✅ Database connected, running migrations..."
+            run_migrations
+            clear_caches
+            echo "✅ Database setup completed!"
+        else
+            echo "⚠️  Could not connect to database"
+            echo "   Configure DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD in environment"
+        fi
+    ) &
+
+    # Start supervisor in foreground
     exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 }
 
