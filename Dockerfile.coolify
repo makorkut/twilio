@@ -77,11 +77,12 @@ RUN mkdir -p \
     storage/sessions \
     storage/uploads/media \
     public/uploads/media \
+    bootstrap/cache \
     && chown -R www-data:www-data \
         storage \
         public/uploads \
         bootstrap/cache \
-    && chmod -R 755 storage public/uploads
+    && chmod -R 755 storage public/uploads bootstrap/cache
 
 # PHP Production Configuration
 RUN { \
