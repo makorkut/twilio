@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+SETUP.md
+DOCKER.md
+README.md
+
+# IDE
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Logs
+*.log
+storage/logs/*
+
+# Cache
+storage/cache/*
+
+# Uploads (will be mounted as volume)
+storage/uploads/*
+public/uploads/*
+
+# Vendor (will be installed in container)
+vendor/
+
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Temporary files
+*.tmp
+*.bak
