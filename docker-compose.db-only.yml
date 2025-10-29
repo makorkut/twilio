@@ -1,0 +1,72 @@
+version: '3.8'
+
+# ============================================================================
+# Sadece Database için Docker Compose
+# Test veya geliştirme ortamı için kullan
+# ============================================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: polyurethane_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_change_me
+      MYSQL_DATABASE: polyurethane_ecommerce
+      MYSQL_USER: ecommerce_user
+      MYSQL_PASSWORD: P0lyur3th@n3!2024$$ecur3
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./setup-database-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - ecommerce_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_change_me"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: polyurethane_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_password_change_me
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ecommerce_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  ecommerce_network:
+    driver: bridge
+
+# ============================================================================
+# Kullanım:
+# ============================================================================
+# docker-compose -f docker-compose.db-only.yml up -d
+#
+# Database Bilgileri:
+#   Host: localhost
+#   Port: 3306
+#   Database: polyurethane_ecommerce
+#   Username: ecommerce_user
+#   Password: P0lyur3th@n3!2024$ecur3
+#
+# phpMyAdmin:
+#   http://localhost:8080
+#   User: root
+#   Pass: root_password_change_me
+# ============================================================================
