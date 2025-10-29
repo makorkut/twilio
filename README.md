@@ -4,6 +4,38 @@
 
 Modern, scalable e-commerce and CMS system built with **PHP 8.x**, **MariaDB**, and **MCP Architecture** (Model-Controller-Presenter).
 
+## 🚀 Quick Deploy
+
+Choose your deployment method:
+
+| Method | Time | Difficulty | Documentation |
+|--------|------|------------|---------------|
+| **🐳 Coolify** | 5 min | ⭐ Easy | [COOLIFY.md](COOLIFY.md) |
+| **🐳 Docker** | 10 min | ⭐⭐ Medium | [DOCKER.md](DOCKER.md) |
+| **💻 Manual** | 30 min | ⭐⭐⭐ Advanced | [SETUP.md](SETUP.md) |
+
+### Coolify (Recommended) ⚡
+```bash
+# 1. Add repository in Coolify
+Repository: https://github.com/makorkut/twilio.git
+Dockerfile: Dockerfile.coolify
+
+# 2. Set environment variables (DB_*, APP_*)
+# 3. Deploy! ✅
+```
+
+### Docker
+```bash
+docker-compose up -d
+# Access: http://localhost:8000
+```
+
+### Manual
+```bash
+./setup.sh
+php -S localhost:8000 -t public/
+```
+
 ---
 
 ## ✨ Features

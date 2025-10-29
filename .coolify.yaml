@@ -1,0 +1,36 @@
+# Coolify Configuration (Optional)
+# This file provides hints to Coolify for automatic configuration
+
+# Build Configuration
+build:
+  dockerfile: Dockerfile.coolify
+  context: .
+
+# Port Configuration
+ports:
+  - 80:80
+
+# Health Check
+healthcheck:
+  path: /api/v1/health
+  interval: 30s
+  timeout: 3s
+  retries: 3
+
+# Environment Variables (Examples - Set in Coolify Dashboard)
+environment:
+  - APP_ENV=production
+  - APP_DEBUG=false
+  # Add more in Coolify Dashboard
+
+# Resource Limits (Recommendations)
+resources:
+  limits:
+    cpu: "1000m"      # 1 CPU core
+    memory: "1024Mi"  # 1GB RAM
+  requests:
+    cpu: "250m"       # 0.25 CPU core
+    memory: "512Mi"   # 512MB RAM
+
+# Restart Policy
+restart: unless-stopped
