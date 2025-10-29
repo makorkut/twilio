@@ -40,7 +40,6 @@ RUN apt-get update && apt-get install -y \
     libwebp-dev \
     zip \
     unzip \
-    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions

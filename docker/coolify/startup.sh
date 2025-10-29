@@ -14,7 +14,18 @@ wait_for_database() {
     local attempt=1
 
     while [ $attempt -le $max_attempts ]; do
-        if nc -z ${DB_HOST:-mysql} ${DB_PORT:-3306} 2>/dev/null; then
+        # Use PHP to test MySQL connection (more reliable than nc)
+        if php -r "
+            \$host = '${DB_HOST:-mysql}';
+            \$port = ${DB_PORT:-3306};
+            \$timeout = 1;
+            \$socket = @fsockopen(\$host, \$port, \$errno, \$errstr, \$timeout);
+            if (\$socket) {
+                fclose(\$socket);
+                exit(0);
+            }
+            exit(1);
+        " 2>/dev/null; then
             echo "✅ Database is ready!"
             sleep 2  # Extra wait for MySQL to be fully initialized
             return 0
@@ -159,7 +170,7 @@ display_info() {
     echo "   URL: ${APP_URL:-http://localhost}"
     echo ""
     echo "🌐 Services:"
-    echo "   ✅ Nginx (Port 80)"
+    echo "   ✅ Nginx (Port 3000)"
     echo "   ✅ PHP-FPM (Port 9000)"
     echo "   ✅ Queue Worker"
     echo ""
