@@ -6,13 +6,14 @@
 # Stage 1: Composer Dependencies
 FROM composer:2 AS composer
 WORKDIR /app
-COPY composer.json composer.lock ./
+COPY composer.json ./
 RUN composer install \
     --no-dev \
     --no-scripts \
     --no-interaction \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-cache
 
 # Stage 2: Frontend Assets (SCSS compilation)
 FROM node:18-alpine AS assets
