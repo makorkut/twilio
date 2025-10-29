@@ -3,26 +3,14 @@
 # Everything configured, migrations auto-run, single container deployment
 # =============================================================================
 
-# Stage 1: Composer Dependencies
-FROM composer:2 AS composer
-WORKDIR /app
-COPY composer.json ./
-RUN composer install \
-    --no-dev \
-    --no-scripts \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-cache
-
-# Stage 2: Frontend Assets (SCSS compilation)
+# Stage 1: Frontend Assets (SCSS compilation)
 FROM node:18-alpine AS assets
 WORKDIR /app
 RUN npm install -g sass
 COPY public/assets/scss ./scss
 RUN sass scss/main.scss:main.css --style=compressed
 
-# Stage 3: Production Image
+# Stage 2: Production Image
 FROM php:8.2-fpm
 
 # Install system dependencies
@@ -66,13 +54,19 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
+# Copy composer.json and install dependencies
+COPY composer.json ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
+
 # Copy application files
 COPY . /var/www/html
 
-# Copy Composer dependencies from stage 1
-COPY --from=composer /app/vendor ./vendor
-
-# Copy compiled CSS from stage 2
+# Copy compiled CSS from stage 1
 COPY --from=assets /app/main.css ./public/assets/css/main.css
 
 # Create necessary directories and set permissions
