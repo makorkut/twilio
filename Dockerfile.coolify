@@ -143,8 +143,8 @@ RUN { \
 RUN rm -f /etc/nginx/sites-enabled/default && \
     { \
     echo 'server {'; \
-    echo '    listen 80;'; \
-    echo '    listen [::]:80;'; \
+    echo '    listen 3000;'; \
+    echo '    listen [::]:3000;'; \
     echo '    server_name _;'; \
     echo '    root /var/www/html/public;'; \
     echo '    index index.php index.html;'; \
@@ -233,10 +233,10 @@ RUN chmod +x /usr/local/bin/startup.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost/api/v1/health || exit 1
+    CMD curl -f http://localhost:3000/api/v1/health || exit 1
 
-# Expose port 80
-EXPOSE 80
+# Expose port 3000
+EXPOSE 3000
 
 # Start everything via startup script
 CMD ["/usr/local/bin/startup.sh"]

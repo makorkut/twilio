@@ -83,13 +83,13 @@ Coolify otomatik olarak:
 ## Port ve Network Ayarları
 
 ### Port
-- **Container Port**: 80 (Nginx dinler)
+- **Container Port**: 3000 (Nginx dinler)
 - **Coolify otomatik olarak**: 443 (HTTPS) veya özel port'a yönlendirir
 
 ### Health Check
 Built-in health check var:
 ```bash
-curl http://localhost/api/v1/health
+curl http://localhost:3000/api/v1/health
 ```
 
 Coolify bunu otomatik kontrol eder her 30 saniyede.

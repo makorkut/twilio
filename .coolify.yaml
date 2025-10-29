@@ -8,7 +8,7 @@ build:
 
 # Port Configuration
 ports:
-  - 80:80
+  - 3000:3000
 
 # Health Check
 healthcheck:
