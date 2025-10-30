@@ -350,3 +350,20 @@ FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
 ALTER TABLE product_relations
 ADD CONSTRAINT fk_product_relations_related
 FOREIGN KEY (related_product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- ============================================
+-- From migration 009: B2B Pricing FK
+-- ============================================
+
+-- product_tier_prices -> products
+ALTER TABLE product_tier_prices
+ADD CONSTRAINT fk_product_tier_prices_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- product_currency_prices -> products  
+ALTER TABLE product_currency_prices
+ADD CONSTRAINT fk_product_currency_prices_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- products -> tax_classes (already handled above but adding note)
+-- FK fk_products_tax_class already added above

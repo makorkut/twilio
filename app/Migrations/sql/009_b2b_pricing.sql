@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS product_tier_prices (
   INDEX idx_product_id (product_id),
   INDEX idx_customer_group_id (customer_group_id),
   INDEX idx_quantity_min (quantity_min),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -82,8 +81,7 @@ CREATE TABLE IF NOT EXISTS product_currency_prices (
 
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-  UNIQUE KEY uniq_product_currency (product_id, currency_code),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  UNIQUE KEY uniq_product_currency (product_id, currency_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tax Classes
@@ -129,10 +127,7 @@ CREATE TABLE IF NOT EXISTS tax_rates (
   FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Update products table foreign key
-ALTER TABLE products
-ADD CONSTRAINT fk_products_tax_class
-FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE SET NULL;
+-- Note: FK to products moved to migration 008
 
 -- Seed: Customer Groups
 INSERT IGNORE INTO customer_groups (id, name, code, default_discount_percent, credit_limit_enabled, default_credit_limit, payment_terms_days, sort_order) VALUES

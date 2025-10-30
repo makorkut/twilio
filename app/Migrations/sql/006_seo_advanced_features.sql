@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS slugs_history (
 CREATE TABLE IF NOT EXISTS product_documents (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
+  
+  INDEX idx_product_id (product_id),
 
   document_type ENUM('cad','technical-drawing','installation-guide','certificate','msds','tds','warranty','manual','other') NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS product_colors (
 CREATE TABLE IF NOT EXISTS product_color_options (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
+  
+  INDEX idx_product_id (product_id),
   color_id INT NOT NULL,
 
   UNIQUE KEY uniq_product_color (product_id, color_id),
@@ -150,8 +150,8 @@ CREATE TABLE IF NOT EXISTS project_products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   project_id INT NOT NULL,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
+  
+  INDEX idx_product_id (product_id),
   quantity_used INT DEFAULT NULL,
 
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
