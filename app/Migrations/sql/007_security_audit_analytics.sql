@@ -270,13 +270,9 @@ CREATE TABLE IF NOT EXISTS gdpr_consent_logs (
   INDEX idx_consent_type (consent_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Extend orders table
-ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS `exchange_rate` DECIMAL(18,6) DEFAULT 1 AFTER `currency`,
-ADD COLUMN IF NOT EXISTS `settled_currency` VARCHAR(3) DEFAULT 'TRY' AFTER `exchange_rate`,
-ADD COLUMN IF NOT EXISTS `display_rate_timestamp` TIMESTAMP NULL AFTER `settled_currency`,
-ADD COLUMN IF NOT EXISTS `fraud_score` INT DEFAULT 0 AFTER `display_rate_timestamp`,
-ADD COLUMN IF NOT EXISTS `risk_status` ENUM('low','medium','high') DEFAULT 'low' AFTER `fraud_score`;
+-- NOTE: Orders table extensions moved to migration 010
+-- Following columns will be added when orders table is created:
+-- settled_currency, display_rate_timestamp, fraud_score, risk_status
 
 -- Seed default warehouse
 INSERT INTO warehouses (name, code, is_primary, is_active) VALUES
