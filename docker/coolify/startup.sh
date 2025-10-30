@@ -7,6 +7,16 @@ echo "================================================"
 echo ""
 
 # ============================================
+# Environment Variable Check
+# ============================================
+if [ "${DB_HOST:-}" = "localhost" ]; then
+    echo "⚠️  WARNING: DB_HOST is set to 'localhost' in environment!"
+    echo "   This will use Unix socket instead of TCP."
+    echo "   Changing to 127.0.0.1 for TCP connection..."
+    export DB_HOST="127.0.0.1"
+fi
+
+# ============================================
 # Step 1: Initialize MariaDB Data Directory
 # ============================================
 echo "📦 Step 1: Initializing MariaDB..."
@@ -57,8 +67,20 @@ DB_USER="${DB_USERNAME:-ecommerce_user}"
 DB_PASS="${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}"
 DB_ROOT_PASS="${DB_ROOT_PASSWORD:-R00t!S3cur3P@ss2024}"
 
+# Try without password first (fresh install), then with password (existing install)
+if mysql -u root -h localhost -e "SELECT 1;" 2>/dev/null; then
+    echo "   ℹ️  Root has no password (fresh install)"
+    MYSQL_ROOT_CMD="mysql -u root -h localhost"
+elif mysql -u root -h localhost -p"${DB_ROOT_PASS}" -e "SELECT 1;" 2>/dev/null; then
+    echo "   ℹ️  Root password already set (existing install)"
+    MYSQL_ROOT_CMD="mysql -u root -h localhost -p${DB_ROOT_PASS}"
+else
+    echo "   ❌ Cannot connect to MariaDB as root!"
+    exit 1
+fi
+
 # Create database and user
-mysql -u root -h localhost <<EOF
+$MYSQL_ROOT_CMD <<EOF
 -- Create database
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -69,7 +91,7 @@ CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 -- Grant privileges
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 
--- Set root password
+-- Set root password (idempotent)
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
 
 FLUSH PRIVILEGES;
@@ -102,6 +124,7 @@ APP_URL=${APP_URL:-http://localhost}
 APP_TIMEZONE=Europe/Istanbul
 
 # Database (MariaDB via TCP, not socket)
+# IMPORTANT: Always use 127.0.0.1, not localhost!
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -151,13 +174,19 @@ echo ""
 echo "🔌 Step 6: Verifying TCP connection to MariaDB..."
 
 # Wait for MariaDB to accept TCP connections on 127.0.0.1:3306
+# Try both with and without password
 for i in {1..30}; do
-    if mysql -u root -h 127.0.0.1 -e "SELECT 1;" 2>/dev/null; then
+    if mysql -u root -h 127.0.0.1 -p"${DB_ROOT_PASS}" -e "SELECT 1;" 2>/dev/null; then
         echo "   ✅ MariaDB accepting TCP connections on 127.0.0.1:3306"
         break
     fi
     if [ $i -eq 30 ]; then
         echo "   ❌ MariaDB TCP connection failed!"
+        echo "   Trying to diagnose..."
+        echo "   - Checking if MariaDB process is running:"
+        ps aux | grep mariadb || true
+        echo "   - Checking TCP port 3306:"
+        netstat -tlnp | grep 3306 || ss -tlnp | grep 3306 || true
         exit 1
     fi
     sleep 1
