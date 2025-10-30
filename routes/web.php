@@ -1144,3 +1144,69 @@ $router->post('/admin/catalogs/{id}/delete', function($id) {
 
     redirect('/admin/catalogs');
 });
+
+// ============================================
+// Admin Languages Routes
+// ============================================
+
+$router->get('/admin/languages', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/languages/list.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/languages/delete/{id}', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $controller = new App\Controllers\Admin\LanguageController($db);
+        $request = new App\Http\Request();
+
+        $response = $controller->delete($request, (int)$id);
+        $data = json_decode($response->content ?? '{}', true);
+
+        if ($data['success'] ?? false) {
+            $_SESSION['success_message'] = $data['message'] ?? 'Dil silindi!';
+        } else {
+            $_SESSION['error_message'] = $data['error'] ?? 'Dil silinemedi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/languages');
+});
+
+// ============================================
+// Admin Settings Routes
+// ============================================
+
+$router->get('/admin/settings', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/settings/index.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/api/settings/statistics', function() {
+    if (!App\Core\Auth::check()) {
+        return Response::json(['error' => 'Unauthorized'], 401);
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $controller = new App\Controllers\Admin\SettingsController($db);
+    $request = new App\Http\Request();
+
+    return $controller->statistics($request);
+});

@@ -28,16 +28,23 @@ class Response
 
     public static function html(string $view, array $data = [], int $statusCode = 200): self
     {
-        // Simple template rendering (in production, use Twig)
-        $viewPath = APP_PATH . '/Views/' . $view . '.twig';
+        // Try .php file first, then .twig file
+        $phpViewPath = APP_PATH . '/Views/' . $view . '.php';
+        $twigViewPath = APP_PATH . '/Views/' . $view . '.twig';
 
-        if (!file_exists($viewPath)) {
-            return self::notFound('View not found: ' . $view);
+        if (file_exists($phpViewPath)) {
+            // Render PHP view
+            ob_start();
+            extract($data);
+            include $phpViewPath;
+            $content = ob_get_clean();
+        } elseif (file_exists($twigViewPath)) {
+            // Render Twig view (placeholder for now)
+            // In production, this would use Twig renderer
+            $content = "<!-- Twig View: {$view} -->\n<!-- Data: " . json_encode($data) . " -->";
+        } else {
+            return self::notFound('View not found: ' . $view . ' (.php or .twig)');
         }
-
-        // For now, return a placeholder
-        // In production, this would use Twig renderer
-        $content = "<!-- View: {$view} -->\n<!-- Data: " . json_encode($data) . " -->";
 
         return new static(
             $content,
