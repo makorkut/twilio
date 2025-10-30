@@ -124,11 +124,32 @@ $router->get('/admin', function() {
         redirect('/admin/login');
     }
 
-    $user = App\Core\Auth::user();
+    // Start session if not started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
-    $html = file_get_contents(PUBLIC_PATH . '/admin-dashboard.php');
-    $html = str_replace('{{USER_NAME}}', htmlspecialchars($user['name']), $html);
-    $html = str_replace('{{USER_EMAIL}}', htmlspecialchars($user['email']), $html);
+    // Include the dashboard view
+    ob_start();
+    include APP_PATH . '/Views/admin/dashboard.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Admin Products List
+$router->get('/admin/products', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/products/list.php';
+    $html = ob_get_clean();
 
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
