@@ -105,9 +105,6 @@ CREATE TABLE IF NOT EXISTS product_views (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
   product_id INT,
-
-
-  INDEX idx_product_id (product_id) NOT NULL,
   user_id INT DEFAULT NULL,
   session_id VARCHAR(128) DEFAULT NULL,
   ip_address VARCHAR(45) DEFAULT NULL,
@@ -145,8 +142,6 @@ CREATE TABLE IF NOT EXISTS inventory_forecasts (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
 
-  INDEX idx_product_id (product_id) NOT NULL,
-
   avg_daily_sales DECIMAL(10,2) DEFAULT 0,
   current_stock INT DEFAULT 0,
   estimated_stockout_date DATE DEFAULT NULL,
@@ -155,7 +150,7 @@ CREATE TABLE IF NOT EXISTS inventory_forecasts (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   UNIQUE KEY uniq_product (product_id),
-
+  INDEX idx_product_id (product_id),
   INDEX idx_estimated_stockout (estimated_stockout_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -179,8 +174,6 @@ CREATE TABLE IF NOT EXISTS warehouses (
 CREATE TABLE IF NOT EXISTS product_stock_locations (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
   warehouse_id INT NOT NULL,
 
   quantity INT DEFAULT 0,
@@ -190,17 +183,15 @@ CREATE TABLE IF NOT EXISTS product_stock_locations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   UNIQUE KEY uniq_product_warehouse (product_id, warehouse_id),
-  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE,
-
-  INDEX idx_warehouse_id (warehouse_id)
+  INDEX idx_product_id (product_id),
+  INDEX idx_warehouse_id (warehouse_id),
+  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Product lots (batch tracking)
 CREATE TABLE IF NOT EXISTS product_lots (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
   warehouse_id INT NOT NULL,
 
   lot_number VARCHAR(100) NOT NULL,
@@ -212,10 +203,9 @@ CREATE TABLE IF NOT EXISTS product_lots (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE KEY uniq_lot_warehouse (lot_number, warehouse_id),
-  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE,
-
   INDEX idx_product_id (product_id),
-  INDEX idx_expiry_date (expiry_date)
+  INDEX idx_expiry_date (expiry_date),
+  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Stock movements
@@ -223,9 +213,6 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
   product_id INT,
-
-
-  INDEX idx_product_id (product_id) NOT NULL,
   warehouse_id INT NOT NULL,
 
   movement_type ENUM('in','out','transfer','adjustment','return','damage') NOT NULL,
@@ -237,12 +224,12 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   user_id INT DEFAULT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE,
 
   INDEX idx_product_id (product_id),
   INDEX idx_warehouse_id (warehouse_id),
   INDEX idx_movement_type (movement_type),
-  INDEX idx_created_at (created_at)
+  INDEX idx_created_at (created_at),
+  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- GDPR requests

@@ -2,37 +2,34 @@
 -- Migration 009: B2B Pricing & Customer Groups
 -- ============================================
 
--- Customer Groups
-CREATE TABLE IF NOT EXISTS customer_groups (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+-- NOTE: customer_groups table created in migration 004
+-- Extending with additional columns if needed
 
-  -- Group Info
-  name VARCHAR(100) NOT NULL UNIQUE,
-  code VARCHAR(50) NOT NULL UNIQUE COMMENT 'e.g., "retail", "wholesale", "distributor"',
-  description TEXT DEFAULT NULL,
+ALTER TABLE customer_groups
+ADD COLUMN IF NOT EXISTS code VARCHAR(50) AFTER name,
+ADD COLUMN IF NOT EXISTS description TEXT AFTER code,
+ADD COLUMN IF NOT EXISTS default_discount_percent DECIMAL(5,2) DEFAULT 0 AFTER description,
+ADD COLUMN IF NOT EXISTS credit_limit_enabled TINYINT(1) DEFAULT 0 AFTER default_discount_percent,
+ADD COLUMN IF NOT EXISTS default_credit_limit DECIMAL(18,2) DEFAULT 0 AFTER credit_limit_enabled,
+ADD COLUMN IF NOT EXISTS show_prices TINYINT(1) DEFAULT 1 AFTER default_credit_limit,
+ADD COLUMN IF NOT EXISTS require_approval TINYINT(1) DEFAULT 0 AFTER show_prices,
+ADD COLUMN IF NOT EXISTS is_active TINYINT(1) DEFAULT 1 AFTER require_approval,
+ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0 AFTER is_active,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
 
-  -- Discounts
-  default_discount_percent DECIMAL(5,2) DEFAULT 0 COMMENT 'General discount %',
+-- Add unique code if it doesn't exist
+SET @code_index_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                          WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'customer_groups'
+                          AND INDEX_NAME = 'code');
 
-  -- B2B Features
-  credit_limit_enabled TINYINT(1) DEFAULT 0,
-  default_credit_limit DECIMAL(18,2) DEFAULT 0,
-  payment_terms_days INT DEFAULT 0 COMMENT '0=immediate, 30=net30, etc.',
+SET @sql = IF(@code_index_check = 0,
+  'ALTER TABLE customer_groups ADD UNIQUE KEY code (code)',
+  'SELECT "Index already exists"');
 
-  -- Visibility
-  show_prices TINYINT(1) DEFAULT 1 COMMENT 'Show prices on site',
-  require_approval TINYINT(1) DEFAULT 0 COMMENT 'New customers need approval',
-
-  -- Status
-  is_active TINYINT(1) DEFAULT 1,
-  sort_order INT DEFAULT 0,
-
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  INDEX idx_code (code),
-  INDEX idx_is_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Tier Pricing (Quantity Discounts)
 CREATE TABLE IF NOT EXISTS product_tier_prices (
@@ -161,11 +158,5 @@ INSERT IGNORE INTO product_tier_prices (product_id, customer_group_id, quantity_
 (1, 3, 10, 49, 70.00),
 (1, 3, 50, NULL, 65.00);
 
--- Update users table to link customer groups
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS customer_group_id INT DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS credit_limit DECIMAL(18,2) DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS credit_used DECIMAL(18,2) DEFAULT 0,
-ADD COLUMN IF NOT EXISTS payment_terms_days INT DEFAULT 0,
-ADD CONSTRAINT fk_users_customer_group
-FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL;
+-- NOTE: users table customer_group columns already added in migration 004
+-- No need to add again
