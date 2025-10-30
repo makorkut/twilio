@@ -204,15 +204,42 @@ main() {
     (
         # Wait for database
         if wait_for_database; then
-            echo "✅ Database connected, running migrations..."
-            run_migrations
+            echo "✅ Database connected!"
+
+            # Run migrations if AUTO_MIGRATE is enabled
+            if [ "${AUTO_MIGRATE:-false}" = "true" ]; then
+                echo "🔧 Running database migrations..."
+                run_migrations
+            fi
+
+            # Seed admin user if AUTO_SEED is enabled
+            if [ "${AUTO_SEED:-false}" = "true" ]; then
+                echo "👤 Creating admin user..."
+                php /var/www/html/app/Migrations/seed-admin.php
+            fi
+
+            # Clear caches
             clear_caches
+
+            # Start worker if AUTO_START_WORKER is enabled
+            if [ "${AUTO_START_WORKER:-false}" = "true" ]; then
+                echo "🚀 Starting worker..."
+                sleep 2  # Wait a bit for supervisor to be ready
+                /usr/bin/supervisorctl start worker
+                echo "✅ Worker started!"
+            fi
+
             echo "✅ Database setup completed!"
         else
             echo "⚠️  Could not connect to database"
             echo "   Configure DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD in environment"
         fi
     ) &
+
+    # Start worker if AUTO_START_WORKER is enabled
+    if [ "${AUTO_START_WORKER:-false}" = "true" ]; then
+        echo "🔄 AUTO_START_WORKER enabled, worker will start after database is ready"
+    fi
 
     # Start supervisor in foreground
     exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
