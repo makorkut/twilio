@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     wget \
+    nano \
+    vim \
     nginx \
     supervisor \
     libpng-dev \
@@ -62,6 +64,10 @@ RUN composer install \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
+
+# Force cache invalidation for application files (use Coolify's SOURCE_COMMIT)
+ARG SOURCE_COMMIT=unknown
+RUN echo "Building from commit: $SOURCE_COMMIT"
 
 # Copy application files
 COPY . /var/www/html
