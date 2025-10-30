@@ -355,16 +355,5 @@ SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE
 SET @sql = IF(@fk_check = 0, 'ALTER TABLE product_relations ADD CONSTRAINT fk_product_relations_related FOREIGN KEY (related_product_id) REFERENCES products(id) ON DELETE CASCADE', 'SELECT "FK already exists"');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- ============================================
--- From migration 009: B2B Pricing FK
--- ============================================
-
--- product_tier_prices -> products
-SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='fk_product_tier_prices_product' AND TABLE_SCHEMA = DATABASE());
-SET @sql = IF(@fk_check = 0, 'ALTER TABLE product_tier_prices ADD CONSTRAINT fk_product_tier_prices_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE', 'SELECT "FK already exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
--- product_currency_prices -> products
-SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='fk_product_currency_prices_product' AND TABLE_SCHEMA = DATABASE());
-SET @sql = IF(@fk_check = 0, 'ALTER TABLE product_currency_prices ADD CONSTRAINT fk_product_currency_prices_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE', 'SELECT "FK already exists"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- NOTE: FK constraints for product_tier_prices and product_currency_prices
+-- will be added in migration 009 after those tables are created
