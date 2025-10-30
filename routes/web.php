@@ -630,3 +630,63 @@ $router->post('/admin/customers/{id}/group', function($id) {
     $_SESSION['success_message'] = 'Müşteri grubu güncellendi!';
     redirect('/admin/customers/' . $id);
 });
+
+// ============================================
+// Admin Media Library Routes
+// ============================================
+
+$router->get('/admin/media', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    ob_start();
+    include APP_PATH . '/Views/admin/media/library.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/media/upload', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        if (empty($_FILES['file'])) {
+            throw new \Exception('No file uploaded');
+        }
+
+        $db = container()->get(App\Core\Database::class);
+        $mediaService = new App\Services\MediaService($db);
+
+        $userId = App\Core\Auth::user()['id'] ?? null;
+
+        // Handle single or multiple files
+        $files = $_FILES['file'];
+        $uploadedCount = 0;
+
+        if (is_array($files['name'])) {
+            // Multiple files
+            for ($i = 0; $i < count($files['name']); $i++) {
+                $file = [
+                    'name' => $files['name'][$i],
+                    'type' => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error' => $files['error'][$i],
+                    'size' => $files['size'][$i],
+                ];
+
+                if ($file['error'] === UPLOAD_ERR_OK) {
+                    $mediaService->upload($file, ['uploaded_by' => $userId]);
+                    $uploadedCount++;
+                }
+            }
+        } else {
+            // Single file
+            $mediaService->upload($files, ['uploaded_by' => $userId]);
+            $uploadedCount = 1;
+        }
+
+        $_SESSION['success_message'] = "{$uploadedCount} dosya başarıyla yüklendi!";
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/media');
+});
