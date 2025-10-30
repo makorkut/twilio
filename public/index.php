@@ -26,25 +26,24 @@ define('THEME_PATH', BASE_PATH . '/themes');
 require BASE_PATH . '/vendor/autoload.php';
 
 // Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
-$dotenv->load();
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
+    $dotenv->load();
+} catch (\Throwable $e) {
+    die("Failed to load .env file: " . $e->getMessage());
+}
 
-// Error handling
-if ($_ENV['APP_DEBUG'] === 'true') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', '1');
+// Error handling - ALWAYS show errors for now
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+ini_set('log_errors', '1');
+ini_set('error_log', STORAGE_PATH . '/logs/php-errors.log');
 
-    // Use Whoops for better error display (if available)
-    if (class_exists('\Whoops\Run')) {
-        $whoops = new \Whoops\Run;
-        $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
-        $whoops->register();
-    }
-} else {
-    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
-    ini_set('display_errors', '0');
-    ini_set('log_errors', '1');
-    ini_set('error_log', STORAGE_PATH . '/logs/php-errors.log');
+// Use Whoops for better error display (if available)
+if (class_exists('\Whoops\Run')) {
+    $whoops = new \Whoops\Run;
+    $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);
+    $whoops->register();
 }
 
 // Timezone

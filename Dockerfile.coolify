@@ -77,6 +77,9 @@ COPY . /var/www/html
 # Copy compiled CSS from stage 1
 COPY --from=assets /app/main.css ./public/assets/css/main.css
 
+# Regenerate autoload files (important for helpers.php)
+RUN composer dump-autoload --optimize
+
 # Create necessary directories and set permissions
 RUN mkdir -p \
     storage/cache/i18n \
