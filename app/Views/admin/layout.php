@@ -421,6 +421,10 @@ $currentPage = $currentPage ?? '';
                     <span class="nav-item-icon">🖼️</span>
                     <span>Medya Kütüphanesi</span>
                 </a>
+                <a href="/admin/catalogs" class="nav-item <?= $currentPage === 'catalogs' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">📚</span>
+                    <span>Kataloglar</span>
+                </a>
             </div>
 
             <!-- B2B -->
