@@ -30,15 +30,20 @@ setup_database() {
     local db_root_pass="${DB_ROOT_PASSWORD:-R00t!S3cur3P@ss2024}"
 
     # Wait a moment for MariaDB to fully start
-    sleep 3
+    sleep 5
 
-    # Create database and user
-    mysql -u root <<-EOSQL
+    # Create database and user (MariaDB 10.x compatible)
+    mysql -u root <<-EOSQL 2>/dev/null || true
         CREATE DATABASE IF NOT EXISTS \`${db_name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        CREATE USER IF NOT EXISTS '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
+
+        -- Create user for localhost (drop first if exists)
+        DROP USER IF EXISTS '${db_user}'@'localhost';
+        CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
         GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'localhost';
-        GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'%';
-        SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${db_root_pass}');
+
+        -- Set root password
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '${db_root_pass}';
+
         FLUSH PRIVILEGES;
 EOSQL
 
@@ -55,7 +60,7 @@ wait_for_database() {
     while [ $attempt -le $max_attempts ]; do
         # Use PHP to test MySQL connection (more reliable than nc)
         if php -r "
-            \$host = '${DB_HOST:-mysql}';
+            \$host = '${DB_HOST:-localhost}';
             \$port = ${DB_PORT:-3306};
             \$timeout = 1;
             \$socket = @fsockopen(\$host, \$port, \$errno, \$errstr, \$timeout);
@@ -205,16 +210,18 @@ display_info() {
     echo "📊 Configuration:"
     echo "   Environment: ${APP_ENV:-production}"
     echo "   Debug Mode: ${APP_DEBUG:-false}"
-    echo "   Database: ${DB_HOST:-mysql}:${DB_PORT:-3306}"
+    echo "   Database: ${DB_HOST:-localhost}:${DB_PORT:-3306} (MariaDB)"
     echo "   URL: ${APP_URL:-http://localhost}"
     echo ""
     echo "🌐 Services:"
+    echo "   ✅ MariaDB (Port 3306)"
     echo "   ✅ Nginx (Port 3000)"
     echo "   ✅ PHP-FPM (Port 9000)"
-    echo "   ✅ Queue Worker"
+    echo "   ✅ Queue Worker (starts after DB ready)"
     echo ""
     echo "📝 Logs:"
     echo "   Application: storage/logs/"
+    echo "   MariaDB: storage/logs/mariadb-*.log"
     echo "   Nginx: storage/logs/nginx-*.log"
     echo "   PHP-FPM: storage/logs/php-fpm-*.log"
     echo "   Worker: storage/logs/worker-*.log"
