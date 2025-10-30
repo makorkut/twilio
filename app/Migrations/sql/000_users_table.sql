@@ -42,16 +42,6 @@ CREATE TABLE IF NOT EXISTS users (
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create default admin user (will be replaced by seed script)
--- Password: Admin123!S3cur3
-INSERT IGNORE INTO users (name, email, password, role, is_active, email_verified_at, created_at, updated_at)
-VALUES (
-  'System Admin',
-  'admin@example.com',
-  '$argon2id$v=19$m=65536,t=4,p=1$OTIxMjM0NTY3ODkwMTIzNA$8K0jDqFj6F0XHQKL5gvM5YXnBJQYLGPQvQZk6bKZGFo',
-  'admin',
-  1,
-  NOW(),
-  NOW(),
-  NOW()
-);
+-- Default admin user will be created by seed-admin.php
+-- This allows credentials to be set via environment variables:
+-- ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
