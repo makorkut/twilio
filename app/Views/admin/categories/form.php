@@ -9,8 +9,16 @@ $isEdit = isset($category);
 $category = $category ?? [];
 
 // Get all categories for parent dropdown
-$db = container()->get(App\Core\Database::class);
-$allCategories = $db->fetchAll("SELECT id, parent_id, name FROM categories ORDER BY name");
+$allCategories = [];
+try {
+    $db = container()->get(App\Core\Database::class);
+    if ($db) {
+        $allCategories = $db->fetchAll("SELECT id, parent_id, name FROM categories ORDER BY name");
+    }
+} catch (\Exception $e) {
+    error_log("Error fetching categories in category form: " . $e->getMessage());
+    // allCategories will be empty array, form will still render
+}
 
 // Build tree for dropdown
 function buildCategoryOptions($categories, $parentId = null, $level = 0, $exclude = null) {
