@@ -167,13 +167,7 @@ CREATE TABLE IF NOT EXISTS email_queue_new (
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Extend products table for automation flags
-ALTER TABLE products
-ADD COLUMN IF NOT EXISTS `auto_update_title` TINYINT(1) DEFAULT 0 AFTER `external_url`,
-ADD COLUMN IF NOT EXISTS `auto_update_description` TINYINT(1) DEFAULT 0 AFTER `auto_update_title`,
-ADD COLUMN IF NOT EXISTS `auto_update_price` TINYINT(1) DEFAULT 0 AFTER `auto_update_description`,
-ADD COLUMN IF NOT EXISTS `auto_update_images` TINYINT(1) DEFAULT 0 AFTER `auto_update_price`,
-ADD COLUMN IF NOT EXISTS `auto_update_stock` TINYINT(1) DEFAULT 0 AFTER `auto_update_images`,
-ADD COLUMN IF NOT EXISTS `sync_status` ENUM('pending','synced','failed','outdated') DEFAULT 'synced' AFTER `auto_update_stock`,
-ADD COLUMN IF NOT EXISTS `last_synced_at` TIMESTAMP NULL AFTER `sync_status`,
-ADD COLUMN IF NOT EXISTS `sync_hash` VARCHAR(64) DEFAULT NULL AFTER `last_synced_at`;
+-- Note: Products table extension moved to migration 008
+-- Following columns will be added when products table is created:
+-- auto_update_title, auto_update_description, auto_update_price,
+-- auto_update_images, auto_update_stock, sync_status, last_synced_at, sync_hash

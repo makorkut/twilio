@@ -114,6 +114,16 @@ CREATE TABLE IF NOT EXISTS products (
   rating_avg DECIMAL(3,2) DEFAULT 0,
   review_count INT DEFAULT 0,
 
+  -- Automation (from migration 005)
+  auto_update_title TINYINT(1) DEFAULT 0,
+  auto_update_description TINYINT(1) DEFAULT 0,
+  auto_update_price TINYINT(1) DEFAULT 0,
+  auto_update_images TINYINT(1) DEFAULT 0,
+  auto_update_stock TINYINT(1) DEFAULT 0,
+  sync_status ENUM('pending','synced','failed','outdated') DEFAULT 'synced',
+  last_synced_at TIMESTAMP NULL,
+  sync_hash VARCHAR(64) DEFAULT NULL,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
