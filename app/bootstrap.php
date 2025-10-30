@@ -23,16 +23,21 @@ use App\Services\QueueService;
 return function (Container $container): void {
     // Core Services
     $container->singleton(Database::class, function () {
-        return new Database([
-            'host' => env('DB_HOST', 'localhost'),
-            'port' => (int) env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE'),
-            'username' => env('DB_USERNAME'),
-            'password' => env('DB_PASSWORD'),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'timeout' => 5
-        ]);
+        try {
+            return new Database([
+                'host' => env('DB_HOST', 'localhost'),
+                'port' => (int) env('DB_PORT', '3306'),
+                'database' => env('DB_DATABASE'),
+                'username' => env('DB_USERNAME'),
+                'password' => env('DB_PASSWORD'),
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'timeout' => 5
+            ]);
+        } catch (\Throwable $e) {
+            error_log('Failed to create Database instance: ' . $e->getMessage());
+            throw $e; // Re-throw to let Application handle it
+        }
     });
 
     $container->singleton(Router::class, function () {

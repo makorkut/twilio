@@ -16,13 +16,21 @@ class Application
 {
     protected Container $container;
     protected Router $router;
-    protected Database $database;
+    protected ?Database $database = null;
 
     public function __construct()
     {
         $this->container = new Container();
         $this->registerCoreServices();
-        $this->database = $this->container->get(Database::class);
+
+        // Try to get database connection (gracefully fail if unavailable)
+        try {
+            $this->database = $this->container->get(Database::class);
+        } catch (\Throwable $e) {
+            error_log('Database connection failed: ' . $e->getMessage());
+            // Continue without database - some routes may still work
+        }
+
         $this->router = $this->container->get(Router::class);
     }
 
