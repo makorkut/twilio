@@ -35,13 +35,14 @@ $sleep = (int) ($options['sleep'] ?? env('QUEUE_WORKER_SLEEP', '3'));
 $limit = (int) ($options['limit'] ?? 50);
 
 // Create services
-$db = new App\Core\Database(
-    env('DB_HOST', 'localhost'),
-    (int) env('DB_PORT', '3306'),
-    env('DB_DATABASE'),
-    env('DB_USERNAME'),
-    env('DB_PASSWORD')
-);
+$db = new App\Core\Database([
+    'host' => env('DB_HOST', 'localhost'),
+    'port' => (int) env('DB_PORT', '3306'),
+    'database' => env('DB_DATABASE'),
+    'username' => env('DB_USERNAME'),
+    'password' => env('DB_PASSWORD'),
+    'charset' => 'utf8mb4'
+]);
 
 $productService = new App\Services\ProductService($db);
 $mediaService = new App\Services\MediaService($db);
