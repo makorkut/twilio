@@ -423,6 +423,64 @@ ob_start();
                 </div>
             </div>
 
+            <!-- Product Calculator -->
+            <div class="form-section">
+                <h3 class="form-section-title">🧮 Miktar Hesaplayıcı</h3>
+                <p class="form-hint" style="margin-bottom: 16px;">
+                    Müşterilerin ihtiyaç duydukları miktarı hesaplamasına yardımcı olun
+                </p>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" name="enable_calculator" id="enable_calculator" value="1"
+                           <?= ($product['coverage_per_unit'] ?? 0) ? 'checked' : '' ?>
+                           onchange="document.getElementById('calculator_options').style.display = this.checked ? 'block' : 'none'">
+                    <label for="enable_calculator">Miktar hesaplayıcıyı aktifleştir</label>
+                </div>
+
+                <div id="calculator_options" style="<?= ($product['coverage_per_unit'] ?? 0) ? '' : 'display: none;' ?> margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 8px;">
+                    <div class="form-group">
+                        <label class="form-label">Hesaplayıcı Tipi</label>
+                        <select name="calculator_type" class="form-control">
+                            <option value="area" <?= ($product['calculator_type'] ?? 'area') === 'area' ? 'selected' : '' ?>>
+                                Alan (Zemin, Duvar Kaplama, Boya)
+                            </option>
+                            <option value="volume" <?= ($product['calculator_type'] ?? '') === 'volume' ? 'selected' : '' ?>>
+                                Hacim (Beton, Harç, Sıva)
+                            </option>
+                            <option value="length" <?= ($product['calculator_type'] ?? '') === 'length' ? 'selected' : '' ?>>
+                                Uzunluk (Kablo, Boru, Profil)
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Birim Başına Kaplama *</label>
+                            <input type="number" name="coverage_per_unit" class="form-control" step="0.01"
+                                   value="<?= htmlspecialchars($product['coverage_per_unit'] ?? '1') ?>"
+                                   placeholder="Örn: 1.5">
+                            <div class="form-hint">Bir birim ürün kaç m² / m³ / m kaplar?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Birim</label>
+                            <select name="coverage_unit" class="form-control">
+                                <option value="m²" <?= ($product['coverage_unit'] ?? 'm²') === 'm²' ? 'selected' : '' ?>>m² (Metrekare)</option>
+                                <option value="m³" <?= ($product['coverage_unit'] ?? '') === 'm³' ? 'selected' : '' ?>>m³ (Metreküp)</option>
+                                <option value="m" <?= ($product['coverage_unit'] ?? '') === 'm' ? 'selected' : '' ?>>m (Metre)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-hint" style="padding: 12px; background: white; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                        <strong>Örnek:</strong><br>
+                        • Laminat parke: 2.10 m² / paket → coverage_per_unit = 2.10<br>
+                        • Seramik karolar: 1.44 m² / kutu → coverage_per_unit = 1.44<br>
+                        • Boya: 12 m² / litre → coverage_per_unit = 12
+                    </div>
+                </div>
+            </div>
+
             <!-- SEO -->
             <div class="form-section">
                 <h3 class="form-section-title">SEO</h3>

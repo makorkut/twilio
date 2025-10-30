@@ -194,6 +194,17 @@ ob_start();
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <!-- Product Calculator Widget -->
+                <?php if (!empty($product['coverage_per_unit'])): ?>
+                    <?php
+                    $productId = $product['id'];
+                    $coveragePerUnit = $product['coverage_per_unit'];
+                    $calculatorType = $product['calculator_type'] ?? 'area';
+                    $unit = $product['coverage_unit'] ?? 'm²';
+                    include __DIR__ . '/components/product-calculator.php';
+                    ?>
+                <?php endif; ?>
             </div>
         </div>
 

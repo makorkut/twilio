@@ -221,6 +221,9 @@ $router->post('/admin/products/create', function() {
             'meta_title' => $_POST['meta_title'] ?? null,
             'meta_description' => $_POST['meta_description'] ?? null,
             'meta_keywords' => $_POST['meta_keywords'] ?? null,
+            'coverage_per_unit' => isset($_POST['enable_calculator']) && !empty($_POST['coverage_per_unit']) ? (float) $_POST['coverage_per_unit'] : null,
+            'calculator_type' => isset($_POST['enable_calculator']) ? ($_POST['calculator_type'] ?? 'area') : null,
+            'coverage_unit' => isset($_POST['enable_calculator']) ? ($_POST['coverage_unit'] ?? 'm²') : null,
         ];
 
         // Insert product
