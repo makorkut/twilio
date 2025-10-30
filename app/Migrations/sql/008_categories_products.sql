@@ -247,3 +247,38 @@ FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE SET NULL;
 ALTER TABLE product_prices_currency
 ADD CONSTRAINT fk_product_prices_product
 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- ============================================
+-- Add Triggers (delayed from migration 003)
+-- ============================================
+
+-- AUTO ATTACH TRIGGER: SKU tag → Product
+-- When a media is tagged with SKU, auto-attach to matching product
+DROP TRIGGER IF EXISTS auto_attach_media_to_product_by_sku;
+
+CREATE TRIGGER auto_attach_media_to_product_by_sku
+AFTER INSERT ON media_tag_relations
+FOR EACH ROW
+BEGIN
+  DECLARE product_sku VARCHAR(255);
+  DECLARE product_found INT;
+
+  -- Check if tag is SKU type
+  SELECT name INTO product_sku
+  FROM media_tags
+  WHERE id = NEW.tag_id AND tag_type = 'sku';
+
+  IF product_sku IS NOT NULL THEN
+    -- Find product by SKU
+    SELECT id INTO product_found
+    FROM products
+    WHERE sku = product_sku
+    LIMIT 1;
+
+    IF product_found IS NOT NULL THEN
+      -- Auto-attach media to product
+      INSERT IGNORE INTO media_usage (media_id, entity_type, entity_id, usage_type)
+      VALUES (NEW.media_id, 'product', product_found, 'gallery');
+    END IF;
+  END IF;
+END;

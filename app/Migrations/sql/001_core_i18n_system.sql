@@ -27,15 +27,9 @@ INSERT IGNORE INTO languages (name, language_code, locale_code, text_editor_lang
 ('Türkçe', 'tr', 'tr_TR', 'tr', 1, 1),
 ('English', 'en', 'en_US', 'en', 1, 0);
 
--- Ensure only one default language
-CREATE TRIGGER IF NOT EXISTS ensure_one_default_language
-BEFORE UPDATE ON languages
-FOR EACH ROW
-BEGIN
-  IF NEW.is_default = 1 AND OLD.is_default = 0 THEN
-    UPDATE languages SET is_default = 0 WHERE id != NEW.id;
-  END IF;
-END;
+-- Note: Default language enforcement moved to application layer
+-- MySQL triggers cannot UPDATE the same table (mutating table error)
+-- Use application logic to ensure only one default language
 
 -- i18n keys table (UI translations)
 CREATE TABLE IF NOT EXISTS i18n_keys (
