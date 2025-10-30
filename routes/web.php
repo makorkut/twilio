@@ -581,3 +581,52 @@ $router->post('/admin/orders/{id}/status', function($id) {
     $_SESSION['success_message'] = 'Sipariş durumu güncellendi!';
     redirect('/admin/orders/' . $id);
 });
+
+// ============================================
+// Admin Customers Routes
+// ============================================
+
+$router->get('/admin/customers', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    ob_start();
+    include APP_PATH . '/Views/admin/customers/list.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/customers/{id}', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $customerService = new App\Services\CustomerService($db);
+    $customer = $customerService->getWithB2BDetails((int) $id);
+
+    if (!$customer) {
+        $_SESSION['error_message'] = 'Müşteri bulunamadı!';
+        redirect('/admin/customers');
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/customers/detail.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/customers/{id}/group', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $customerService = new App\Services\CustomerService($db);
+
+    $groupId = !empty($_POST['customer_group_id']) ? (int) $_POST['customer_group_id'] : null;
+
+    if ($groupId) {
+        $customerService->updateGroup((int) $id, $groupId);
+    } else {
+        $db->update('users', ['customer_group_id' => null], ['id' => (int) $id]);
+    }
+
+    $_SESSION['success_message'] = 'Müşteri grubu güncellendi!';
+    redirect('/admin/customers/' . $id);
+});
