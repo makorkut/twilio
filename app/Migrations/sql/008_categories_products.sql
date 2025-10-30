@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS products (
   base_price DECIMAL(18,4) NOT NULL DEFAULT 0,
   compare_price DECIMAL(18,4) DEFAULT NULL COMMENT 'Original price (for discount display)',
   cost_price DECIMAL(18,4) DEFAULT NULL COMMENT 'Your cost (for margin calc)',
+  price_visibility ENUM('visible','hidden','login_required') DEFAULT 'visible',
 
   -- Tax
   tax_class_id INT DEFAULT NULL,
@@ -232,3 +233,17 @@ INSERT IGNORE INTO products (id, sku, name, slug, short_description, base_price,
 -- Link product to category
 INSERT IGNORE INTO product_categories (product_id, category_id, is_primary) VALUES
 (1, 4, 1);
+
+-- ============================================
+-- Add Foreign Keys (delayed from migration 002)
+-- ============================================
+
+-- Add FK from products to tax_classes
+ALTER TABLE products
+ADD CONSTRAINT fk_products_tax_class
+FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE SET NULL;
+
+-- Add FK from product_prices_currency to products
+ALTER TABLE product_prices_currency
+ADD CONSTRAINT fk_product_prices_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
