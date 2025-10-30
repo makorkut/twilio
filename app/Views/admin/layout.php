@@ -269,6 +269,75 @@ $currentPage = $currentPage ?? '';
             background: #e2e8f0;
         }
 
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text);
+            background: var(--color-bg);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-draft {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-archived {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-processing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-warning {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -341,9 +410,26 @@ $currentPage = $currentPage ?? '';
                 </a>
             </div>
 
+            <!-- Content -->
+            <div class="nav-section">
+                <div class="nav-section-title">İçerik</div>
+                <a href="/admin/documents" class="nav-item <?= $currentPage === 'documents' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">📄</span>
+                    <span>Teknik Dokümanlar</span>
+                </a>
+                <a href="/admin/media" class="nav-item <?= $currentPage === 'media' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">🖼️</span>
+                    <span>Medya Kütüphanesi</span>
+                </a>
+            </div>
+
             <!-- B2B -->
             <div class="nav-section">
                 <div class="nav-section-title">B2B</div>
+                <a href="/admin/samples" class="nav-item <?= $currentPage === 'samples' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">📦</span>
+                    <span>Numune Siparişleri</span>
+                </a>
                 <a href="/admin/customer-groups" class="nav-item <?= $currentPage === 'customer-groups' ? 'active' : '' ?>">
                     <span class="nav-item-icon">👔</span>
                     <span>Müşteri Grupları</span>

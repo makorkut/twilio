@@ -75,6 +75,21 @@ try {
 ob_start();
 ?>
 
+<!-- Success/Error Messages -->
+<?php if (isset($_SESSION['success_message'])): ?>
+    <div style="padding: 16px 24px; background: #d1fae5; color: #065f46; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #10b981;">
+        <strong>✓</strong> <?= htmlspecialchars($_SESSION['success_message']) ?>
+    </div>
+    <?php unset($_SESSION['success_message']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['error_message'])): ?>
+    <div style="padding: 16px 24px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #ef4444;">
+        <strong>✗</strong> <?= htmlspecialchars($_SESSION['error_message']) ?>
+    </div>
+    <?php unset($_SESSION['error_message']); ?>
+<?php endif; ?>
+
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
     <div>
         <h1 class="page-title">Ürünler</h1>
