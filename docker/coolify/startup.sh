@@ -1,111 +1,117 @@
 #!/bin/bash
-set -e
+set -e  # Exit on any error
 
 echo "================================================"
-echo "🚀 Starting E-Commerce Application (Coolify)"
+echo "🚀 E-Commerce Application - Single Container"
 echo "================================================"
 echo ""
 
-# Function to initialize MariaDB
-initialize_mariadb() {
-    echo "🔧 Initializing MariaDB..."
+# ============================================
+# Step 1: Initialize MariaDB Data Directory
+# ============================================
+echo "📦 Step 1: Initializing MariaDB..."
 
-    # Check if MySQL data directory is already initialized
-    if [ ! -d "/var/lib/mysql/mysql" ]; then
-        echo "📦 First run - initializing MySQL data directory..."
-        mysql_install_db --user=mysql --datadir=/var/lib/mysql --skip-test-db
-        echo "✅ MySQL data directory initialized"
-    else
-        echo "✅ MySQL data directory already exists"
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    echo "   First run - creating MySQL data directory..."
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql --skip-test-db
+    echo "   ✅ MySQL data directory created"
+else
+    echo "   ✅ MySQL data directory already exists"
+fi
+
+# ============================================
+# Step 2: Start MariaDB
+# ============================================
+echo ""
+echo "🔧 Step 2: Starting MariaDB..."
+
+# Start MariaDB in background
+mysqld_safe --datadir=/var/lib/mysql --user=mysql &
+MYSQL_PID=$!
+
+# Wait for MariaDB to be ready
+echo "   Waiting for MariaDB to start..."
+for i in {1..30}; do
+    if mysqladmin ping -h localhost --silent 2>/dev/null; then
+        echo "   ✅ MariaDB is running!"
+        break
     fi
-}
+    if [ $i -eq 30 ]; then
+        echo "   ❌ MariaDB failed to start!"
+        exit 1
+    fi
+    sleep 2
+done
 
-# Function to setup database and user
-setup_database() {
-    echo "🗄️  Setting up database and user..."
+# Extra wait for full initialization
+sleep 2
 
-    local db_name="${DB_DATABASE:-ecommerce_db}"
-    local db_user="${DB_USERNAME:-ecommerce_user}"
-    local db_pass="${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}"
-    local db_root_pass="${DB_ROOT_PASSWORD:-R00t!S3cur3P@ss2024}"
+# ============================================
+# Step 3: Create Database and User
+# ============================================
+echo ""
+echo "🗄️  Step 3: Creating database and user..."
 
-    # Wait a moment for MariaDB to fully start
-    sleep 5
+DB_NAME="${DB_DATABASE:-ecommerce_db}"
+DB_USER="${DB_USERNAME:-ecommerce_user}"
+DB_PASS="${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}"
+DB_ROOT_PASS="${DB_ROOT_PASSWORD:-R00t!S3cur3P@ss2024}"
 
-    # Create database and user (MariaDB 10.x compatible)
-    mysql -u root <<-EOSQL 2>/dev/null || true
-        CREATE DATABASE IF NOT EXISTS \`${db_name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# Create database and user
+mysql -u root -h localhost <<EOF
+-- Create database
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-        -- Create user for localhost (drop first if exists)
-        DROP USER IF EXISTS '${db_user}'@'localhost';
-        CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
-        GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'localhost';
+-- Create user
+DROP USER IF EXISTS '${DB_USER}'@'localhost';
+CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 
-        -- Set root password
-        ALTER USER 'root'@'localhost' IDENTIFIED BY '${db_root_pass}';
+-- Grant privileges
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 
-        FLUSH PRIVILEGES;
-EOSQL
+-- Set root password
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
 
-    echo "✅ Database '${db_name}' and user '${db_user}' created successfully"
-}
+FLUSH PRIVILEGES;
 
-# Function to wait for database
-wait_for_database() {
-    echo "⏳ Waiting for database to be ready..."
+-- Verify
+SELECT User, Host FROM mysql.user WHERE User IN ('root', '${DB_USER}');
+SHOW DATABASES LIKE '${DB_NAME}';
+EOF
 
-    local max_attempts=30
-    local attempt=1
+if [ $? -eq 0 ]; then
+    echo "   ✅ Database '${DB_NAME}' created"
+    echo "   ✅ User '${DB_USER}' created"
+else
+    echo "   ❌ Failed to create database!"
+    exit 1
+fi
 
-    while [ $attempt -le $max_attempts ]; do
-        # Use PHP to test MySQL connection (more reliable than nc)
-        if php -r "
-            \$host = '${DB_HOST:-localhost}';
-            \$port = ${DB_PORT:-3306};
-            \$timeout = 1;
-            \$socket = @fsockopen(\$host, \$port, \$errno, \$errstr, \$timeout);
-            if (\$socket) {
-                fclose(\$socket);
-                exit(0);
-            }
-            exit(1);
-        " 2>/dev/null; then
-            echo "✅ Database is ready!"
-            sleep 2  # Extra wait for MySQL to be fully initialized
-            return 0
-        fi
+# ============================================
+# Step 4: Create .env File
+# ============================================
+echo ""
+echo "⚙️  Step 4: Creating .env file..."
 
-        echo "   Attempt $attempt/$max_attempts: Database not ready yet..."
-        sleep 2
-        attempt=$((attempt + 1))
-    done
-
-    echo "❌ Database connection timeout!"
-    return 1
-}
-
-# Create .env file from environment variables
-create_env_file() {
-    echo "⚙️  Creating .env file from environment variables..."
-
-    cat > /var/www/html/.env <<EOF
+cat > /var/www/html/.env <<ENVEOF
 # Application
 APP_NAME=${APP_NAME:-E-Commerce}
 APP_ENV=${APP_ENV:-production}
 APP_DEBUG=${APP_DEBUG:-false}
 APP_URL=${APP_URL:-http://localhost}
+APP_TIMEZONE=Europe/Istanbul
 
-# Database
+# Database (MariaDB on localhost)
 DB_CONNECTION=mysql
-DB_HOST=${DB_HOST:-localhost}
-DB_PORT=${DB_PORT:-3306}
-DB_DATABASE=${DB_DATABASE:-ecommerce_db}
-DB_USERNAME=${DB_USERNAME:-ecommerce_user}
-DB_PASSWORD=${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=${DB_NAME}
+DB_USERNAME=${DB_USER}
+DB_PASSWORD=${DB_PASS}
 
-# Default Settings
-DEFAULT_LANG=${DEFAULT_LANG:-tr}
-DEFAULT_CURRENCY=${DEFAULT_CURRENCY:-TRY}
+# Localization
+DEFAULT_LANG=tr
+DEFAULT_CURRENCY=TRY
 
 # Cache & Session
 CACHE_DRIVER=file
@@ -117,211 +123,151 @@ QUEUE_CONNECTION=database
 
 # Logging
 LOG_CHANNEL=stack
-LOG_LEVEL=${LOG_LEVEL:-error}
-
-# Mail (Configure for production)
-MAIL_MAILER=${MAIL_MAILER:-smtp}
-MAIL_HOST=${MAIL_HOST:-localhost}
-MAIL_PORT=${MAIL_PORT:-587}
-MAIL_USERNAME=${MAIL_USERNAME:-}
-MAIL_PASSWORD=${MAIL_PASSWORD:-}
-MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}
-MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@example.com}
-MAIL_FROM_NAME=\${APP_NAME}
-
-# Webhooks
-LOCAL_CRM_WEBHOOK_SECRET=${LOCAL_CRM_WEBHOOK_SECRET:-}
-LOCAL_CRM_ENABLED=${LOCAL_CRM_ENABLED:-false}
-LOCAL_CRM_BASE_URL=${LOCAL_CRM_BASE_URL:-}
-
-# Rate Limiting
-RATE_LIMIT_MAX_ATTEMPTS=${RATE_LIMIT_MAX_ATTEMPTS:-60}
-RATE_LIMIT_DECAY_MINUTES=${RATE_LIMIT_DECAY_MINUTES:-1}
+LOG_LEVEL=error
 
 # Features
-FEATURE_B2B=${FEATURE_B2B:-true}
-FEATURE_WAREHOUSE=${FEATURE_WAREHOUSE:-true}
-FEATURE_PROJECTS=${FEATURE_PROJECTS:-true}
+FEATURE_B2B=true
+FEATURE_WAREHOUSE=true
+FEATURE_PROJECTS=true
+ENVEOF
 
-# Pricing
-PRICE_VISIBILITY=${PRICE_VISIBILITY:-visible}
-PRICE_INCLUDES_VAT=${PRICE_INCLUDES_VAT:-true}
-DEFAULT_VAT_RATE=${DEFAULT_VAT_RATE:-20}
+echo "   ✅ .env file created"
 
-# CORS
-CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
-EOF
+# ============================================
+# Step 5: Set Permissions
+# ============================================
+echo ""
+echo "🔐 Step 5: Setting permissions..."
 
-    echo "✅ .env file created"
-}
+chown -R www-data:www-data /var/www/html/storage /var/www/html/public/uploads 2>/dev/null || true
+chmod -R 755 /var/www/html/storage /var/www/html/public/uploads 2>/dev/null || true
 
-# Run database migrations
-run_migrations() {
-    local migration_flag="/var/www/html/storage/.migrations_done"
+echo "   ✅ Permissions set"
 
-    if [ -f "$migration_flag" ]; then
-        echo "ℹ️  Migrations already applied (skipping)"
-        return 0
-    fi
+# ============================================
+# Step 6: Run Database Migrations
+# ============================================
+echo ""
+echo "🔄 Step 6: Running database migrations..."
 
-    echo "🔧 Running database migrations..."
+cd /var/www/html
 
-    if php /var/www/html/app/Migrations/apply.php; then
-        echo "✅ Migrations completed successfully"
-        touch "$migration_flag"
-        return 0
-    else
-        echo "⚠️  Migration failed or already applied"
-        # Don't fail the container, continue anyway
-        return 0
-    fi
-}
+if php app/Migrations/apply.php 2>&1 | tee /var/www/html/storage/logs/migrations.log; then
+    echo "   ✅ Migrations completed"
+else
+    echo "   ⚠️  Migrations failed (check logs/migrations.log)"
+fi
 
-# Set proper permissions
-set_permissions() {
-    echo "🔐 Setting proper permissions..."
-    chown -R www-data:www-data /var/www/html/storage /var/www/html/public/uploads
-    chmod -R 755 /var/www/html/storage /var/www/html/public/uploads
-    echo "✅ Permissions set"
-}
+# ============================================
+# Step 7: Create Admin User
+# ============================================
+echo ""
+echo "👤 Step 7: Creating admin user..."
 
-# Clear caches
-clear_caches() {
-    echo "🧹 Clearing application caches..."
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@polyes.tr}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin123!S3cur3}"
+ADMIN_NAME="${ADMIN_NAME:-Admin User}"
 
-    # Clear OPcache (will be regenerated)
-    if [ -f /var/run/php-fpm.pid ]; then
-        kill -USR2 $(cat /var/run/php-fpm.pid) 2>/dev/null || true
-    fi
+export ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME
 
-    # Clear file cache
-    find /var/www/html/storage/cache -type f -name "*.php" -delete 2>/dev/null || true
-
-    echo "✅ Caches cleared"
-}
-
-# Display startup info
-display_info() {
+if php app/Migrations/seed-admin.php 2>&1 | tee /var/www/html/storage/logs/seed-admin.log; then
+    echo "   ✅ Admin user created"
     echo ""
-    echo "================================================"
-    echo "✅ Application Started Successfully!"
-    echo "================================================"
-    echo ""
-    echo "📊 Configuration:"
-    echo "   Environment: ${APP_ENV:-production}"
-    echo "   Debug Mode: ${APP_DEBUG:-false}"
-    echo "   Database: ${DB_HOST:-localhost}:${DB_PORT:-3306} (MariaDB)"
-    echo "   URL: ${APP_URL:-http://localhost}"
-    echo ""
-    echo "🌐 Services:"
-    echo "   ✅ MariaDB (Port 3306)"
-    echo "   ✅ Nginx (Port 3000)"
-    echo "   ✅ PHP-FPM (Port 9000)"
-    echo "   ✅ Queue Worker (starts after DB ready)"
-    echo ""
-    echo "📝 Logs:"
-    echo "   Application: storage/logs/"
-    echo "   MariaDB: storage/logs/mariadb-*.log"
-    echo "   Nginx: storage/logs/nginx-*.log"
-    echo "   PHP-FPM: storage/logs/php-fpm-*.log"
-    echo "   Worker: storage/logs/worker-*.log"
-    echo ""
-    echo "🚀 Ready to serve requests!"
-    echo "================================================"
-    echo ""
-}
+    echo "   📋 Admin Credentials:"
+    echo "   Email: ${ADMIN_EMAIL}"
+    echo "   Password: ${ADMIN_PASSWORD}"
+else
+    echo "   ⚠️  Admin user creation failed (check logs/seed-admin.log)"
+fi
 
-# Main execution
-main() {
-    # Initialize MariaDB data directory (first time only)
-    initialize_mariadb
+# ============================================
+# Step 8: Start PHP-FPM
+# ============================================
+echo ""
+echo "🐘 Step 8: Starting PHP-FPM..."
 
-    # Create .env file immediately (don't wait for database)
-    create_env_file
+php-fpm &
+PHP_FPM_PID=$!
 
-    # Set permissions
-    set_permissions
+sleep 2
 
-    # Display info
-    display_info
+if kill -0 $PHP_FPM_PID 2>/dev/null; then
+    echo "   ✅ PHP-FPM is running (PID: $PHP_FPM_PID)"
+else
+    echo "   ❌ PHP-FPM failed to start!"
+    exit 1
+fi
 
-    # Start supervisor (MariaDB + Nginx + PHP-FPM + Worker)
-    echo "🎬 Starting services with Supervisor..."
-    echo "   (MariaDB will start first, then migrations will run)"
+# ============================================
+# Step 9: Start Nginx
+# ============================================
+echo ""
+echo "🌐 Step 9: Starting Nginx..."
 
-    # Start supervisor in background to let MariaDB start
-    /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
-    SUPERVISOR_PID=$!
+nginx -t 2>&1
+if [ $? -ne 0 ]; then
+    echo "   ❌ Nginx configuration test failed!"
+    exit 1
+fi
 
-    # Wait for MariaDB to actually be ready (not just started)
-    echo "⏳ Waiting for MariaDB to be ready..."
-    local max_wait=30
-    local count=0
-    while [ $count -lt $max_wait ]; do
-        if mysqladmin ping -h localhost --silent 2>/dev/null; then
-            echo "✅ MariaDB is ready!"
-            break
-        fi
-        echo "   Attempt $((count+1))/$max_wait: MariaDB not ready yet..."
-        sleep 2
-        count=$((count+1))
-    done
+nginx &
+NGINX_PID=$!
 
-    if [ $count -ge $max_wait ]; then
-        echo "❌ MariaDB failed to start in time!"
-        exit 1
-    fi
+sleep 2
 
-    # Extra wait for MariaDB to be fully initialized
-    sleep 3
+if kill -0 $NGINX_PID 2>/dev/null; then
+    echo "   ✅ Nginx is running (PID: $NGINX_PID)"
+else
+    echo "   ❌ Nginx failed to start!"
+    exit 1
+fi
 
-    # Setup database and user (first time or if not exists)
-    setup_database
+# ============================================
+# Step 10: Start Worker (Optional)
+# ============================================
+echo ""
+echo "⚙️  Step 10: Starting background worker..."
 
-    # Run database setup
-    (
-        # Wait for database
-        if wait_for_database; then
-            echo "✅ Database connected!"
+if [ "${AUTO_START_WORKER:-true}" = "true" ]; then
+    su -s /bin/bash -c "php /var/www/html/worker.php --daemon --sleep=3" www-data > /var/www/html/storage/logs/worker.log 2>&1 &
+    WORKER_PID=$!
+    echo "   ✅ Worker is running (PID: $WORKER_PID)"
+else
+    echo "   ⏸️  Worker disabled (AUTO_START_WORKER=false)"
+fi
 
-            # Run migrations if AUTO_MIGRATE is enabled
-            if [ "${AUTO_MIGRATE:-false}" = "true" ]; then
-                echo "🔧 Running database migrations..."
-                run_migrations
-            fi
+# ============================================
+# Final Summary
+# ============================================
+echo ""
+echo "================================================"
+echo "✅ ALL SERVICES STARTED SUCCESSFULLY!"
+echo "================================================"
+echo ""
+echo "📊 Service Status:"
+echo "   ✅ MariaDB    - localhost:3306"
+echo "   ✅ PHP-FPM    - 127.0.0.1:9000"
+echo "   ✅ Nginx      - 0.0.0.0:3000"
+echo "   ✅ Worker     - Background"
+echo ""
+echo "🗄️  Database:"
+echo "   Name: ${DB_NAME}"
+echo "   User: ${DB_USER}"
+echo "   Host: localhost"
+echo ""
+echo "👤 Admin Panel:"
+echo "   URL: ${APP_URL}/admin"
+echo "   Email: ${ADMIN_EMAIL}"
+echo "   Password: ${ADMIN_PASSWORD}"
+echo ""
+echo "📝 Logs:"
+echo "   App: /var/www/html/storage/logs/"
+echo "   Migrations: /var/www/html/storage/logs/migrations.log"
+echo "   Admin Seed: /var/www/html/storage/logs/seed-admin.log"
+echo ""
+echo "🚀 System Ready!"
+echo "================================================"
+echo ""
 
-            # Seed admin user if AUTO_SEED is enabled
-            if [ "${AUTO_SEED:-false}" = "true" ]; then
-                echo "👤 Creating admin user..."
-                php /var/www/html/app/Migrations/seed-admin.php
-            fi
-
-            # Clear caches
-            clear_caches
-
-            # Start worker if AUTO_START_WORKER is enabled
-            if [ "${AUTO_START_WORKER:-false}" = "true" ]; then
-                echo "🚀 Starting worker..."
-                sleep 2  # Wait a bit for supervisor to be ready
-                /usr/bin/supervisorctl start worker
-                echo "✅ Worker started!"
-            fi
-
-            echo "✅ Database setup completed!"
-        else
-            echo "⚠️  Could not connect to database"
-            echo "   Configure DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD in environment"
-        fi
-    ) &
-
-    # Start worker if AUTO_START_WORKER is enabled
-    if [ "${AUTO_START_WORKER:-false}" = "true" ]; then
-        echo "🔄 AUTO_START_WORKER enabled, worker will start after database is ready"
-    fi
-
-    # Wait for supervisor process
-    wait $SUPERVISOR_PID
-}
-
-# Run main
-main
+# Keep container running by tailing logs
+tail -f /var/www/html/storage/logs/*.log /dev/null
