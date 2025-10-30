@@ -26,24 +26,32 @@ class Database
     protected function connect(): void
     {
         try {
+            // Set defaults for optional config values
+            $charset = $this->config['charset'] ?? 'utf8mb4';
+            $collation = $this->config['collation'] ?? 'utf8mb4_unicode_ci';
+            $timeout = $this->config['timeout'] ?? 5;
+
             $dsn = sprintf(
                 'mysql:host=%s;port=%d;dbname=%s;charset=%s',
                 $this->config['host'],
                 $this->config['port'],
                 $this->config['database'],
-                $this->config['charset']
+                $charset
             );
+
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::ATTR_TIMEOUT => $timeout,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES '{$charset}' COLLATE '{$collation}'"
+            ];
 
             $this->pdo = new PDO(
                 $dsn,
                 $this->config['username'],
                 $this->config['password'],
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES '{$this->config['charset']}' COLLATE '{$this->config['collation']}'"
-                ]
+                $options
             );
         } catch (PDOException $e) {
             throw new \RuntimeException('Database connection failed: ' . $e->getMessage());

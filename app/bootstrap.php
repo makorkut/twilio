@@ -23,13 +23,16 @@ use App\Services\QueueService;
 return function (Container $container): void {
     // Core Services
     $container->singleton(Database::class, function () {
-        return new Database(
-            env('DB_HOST', 'localhost'),
-            (int) env('DB_PORT', '3306'),
-            env('DB_DATABASE'),
-            env('DB_USERNAME'),
-            env('DB_PASSWORD')
-        );
+        return new Database([
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => (int) env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'timeout' => 5
+        ]);
     });
 
     $container->singleton(Router::class, function () {

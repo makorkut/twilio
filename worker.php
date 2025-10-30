@@ -42,7 +42,8 @@ $db = new App\Core\Database([
     'username' => env('DB_USERNAME'),
     'password' => env('DB_PASSWORD'),
     'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci'
+    'collation' => 'utf8mb4_unicode_ci',
+    'timeout' => 5
 ]);
 
 $productService = new App\Services\ProductService($db);
