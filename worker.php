@@ -35,16 +35,29 @@ $sleep = (int) ($options['sleep'] ?? env('QUEUE_WORKER_SLEEP', '3'));
 $limit = (int) ($options['limit'] ?? 50);
 
 // Create services
-$db = new App\Core\Database([
-    'host' => env('DB_HOST', 'localhost'),
-    'port' => (int) env('DB_PORT', '3306'),
-    'database' => env('DB_DATABASE'),
-    'username' => env('DB_USERNAME'),
-    'password' => env('DB_PASSWORD'),
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'timeout' => 5
-]);
+try {
+    $db = new App\Core\Database([
+        'host' => env('DB_HOST', 'localhost'),
+        'port' => (int) env('DB_PORT', '3306'),
+        'database' => env('DB_DATABASE'),
+        'username' => env('DB_USERNAME'),
+        'password' => env('DB_PASSWORD'),
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+        'timeout' => 5
+    ]);
+} catch (\Throwable $e) {
+    output('❌ Database connection failed: ' . $e->getMessage());
+    output('');
+    output('Please check:');
+    output('  1. Database server is running');
+    output('  2. DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD in .env are correct');
+    output('  3. Database server allows connections from this IP');
+    output('  4. Firewall rules permit access to database port');
+    output('');
+    output('Worker cannot run without database connection.');
+    exit(1);
+}
 
 $productService = new App\Services\ProductService($db);
 $mediaService = new App\Services\MediaService($db);
