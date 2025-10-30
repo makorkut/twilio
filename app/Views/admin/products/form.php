@@ -8,8 +8,16 @@ $pageTitle = isset($product) ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle';
 $currentPage = 'products';
 
 // Get categories for dropdown
-$db = container()->get(App\Core\Database::class);
-$categories = $db->fetchAll("SELECT id, name, parent_id FROM categories WHERE is_active = 1 ORDER BY sort_order, name");
+$categories = [];
+try {
+    $db = container()->get(App\Core\Database::class);
+    if ($db) {
+        $categories = $db->fetchAll("SELECT id, name, parent_id FROM categories WHERE is_active = 1 ORDER BY sort_order, name");
+    }
+} catch (\Exception $e) {
+    error_log("Error fetching categories in product form: " . $e->getMessage());
+    // Categories will be empty array, form will still render
+}
 
 // Check if this is edit mode
 $isEdit = isset($product);

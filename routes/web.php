@@ -171,11 +171,17 @@ $router->get('/admin/products/create', function() {
         session_start();
     }
 
-    ob_start();
-    include APP_PATH . '/Views/admin/products/form.php';
-    $html = ob_get_clean();
+    try {
+        ob_start();
+        include APP_PATH . '/Views/admin/products/form.php';
+        $html = ob_get_clean();
 
-    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+        return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    } catch (\Exception $e) {
+        error_log("Error loading product create form: " . $e->getMessage());
+        $_SESSION['error_message'] = 'Form yüklenirken hata oluştu: ' . $e->getMessage();
+        redirect('/admin/products');
+    }
 });
 
 // Admin Product Create - Handle Submission
@@ -401,11 +407,17 @@ $router->get('/admin/categories/create', function() {
         session_start();
     }
 
-    ob_start();
-    include APP_PATH . '/Views/admin/categories/form.php';
-    $html = ob_get_clean();
+    try {
+        ob_start();
+        include APP_PATH . '/Views/admin/categories/form.php';
+        $html = ob_get_clean();
 
-    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+        return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    } catch (\Exception $e) {
+        error_log("Error loading category create form: " . $e->getMessage());
+        $_SESSION['error_message'] = 'Form yüklenirken hata oluştu: ' . $e->getMessage();
+        redirect('/admin/categories');
+    }
 });
 
 // Category Create - Handle Submission
