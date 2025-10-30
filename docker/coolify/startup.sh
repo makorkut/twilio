@@ -253,8 +253,27 @@ main() {
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
     SUPERVISOR_PID=$!
 
-    # Wait for MariaDB to start via supervisor
-    sleep 5
+    # Wait for MariaDB to actually be ready (not just started)
+    echo "⏳ Waiting for MariaDB to be ready..."
+    local max_wait=30
+    local count=0
+    while [ $count -lt $max_wait ]; do
+        if mysqladmin ping -h localhost --silent 2>/dev/null; then
+            echo "✅ MariaDB is ready!"
+            break
+        fi
+        echo "   Attempt $((count+1))/$max_wait: MariaDB not ready yet..."
+        sleep 2
+        count=$((count+1))
+    done
+
+    if [ $count -ge $max_wait ]; then
+        echo "❌ MariaDB failed to start in time!"
+        exit 1
+    fi
+
+    # Extra wait for MariaDB to be fully initialized
+    sleep 3
 
     # Setup database and user (first time or if not exists)
     setup_database
