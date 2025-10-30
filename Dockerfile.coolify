@@ -205,13 +205,20 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
 } > /etc/nginx/sites-available/default && \
 ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
-# Supervisor Configuration (runs MariaDB, Nginx, PHP-FPM, and Worker)
+# Supervisor Main Configuration
 RUN { \
     echo '[supervisord]'; \
     echo 'nodaemon=true'; \
     echo 'logfile=/var/www/html/storage/logs/supervisord.log'; \
     echo 'pidfile=/var/run/supervisord.pid'; \
+    echo 'user=root'; \
     echo ''; \
+    echo '[include]'; \
+    echo 'files = /etc/supervisor/conf.d/*.conf'; \
+} > /etc/supervisor/supervisord.conf
+
+# Supervisor Programs (runs MariaDB, Nginx, PHP-FPM, and Worker)
+RUN { \
     echo '[program:mariadb]'; \
     echo 'command=/usr/bin/mysqld_safe --datadir=/var/lib/mysql'; \
     echo 'autostart=true'; \
@@ -222,7 +229,7 @@ RUN { \
     echo 'user=mysql'; \
     echo ''; \
     echo '[program:php-fpm]'; \
-    echo 'command=php-fpm'; \
+    echo 'command=php-fpm -F'; \
     echo 'autostart=true'; \
     echo 'autorestart=true'; \
     echo 'priority=10'; \
@@ -245,7 +252,7 @@ RUN { \
     echo 'stdout_logfile=/var/www/html/storage/logs/worker-stdout.log'; \
     echo 'stderr_logfile=/var/www/html/storage/logs/worker-stderr.log'; \
     echo 'user=www-data'; \
-} > /etc/supervisor/conf.d/supervisord.conf
+} > /etc/supervisor/conf.d/services.conf
 
 # Startup script
 COPY docker/coolify/startup.sh /usr/local/bin/startup.sh

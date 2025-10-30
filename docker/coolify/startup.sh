@@ -181,74 +181,25 @@ else
 fi
 
 # ============================================
-# Step 8: Start PHP-FPM
+# Step 8: Stop MariaDB (Supervisor will manage it)
 # ============================================
 echo ""
-echo "🐘 Step 8: Starting PHP-FPM..."
+echo "⏸️  Step 8: Stopping MariaDB (Supervisor will restart)..."
 
-php-fpm &
-PHP_FPM_PID=$!
-
+mysqladmin -u root -p"${DB_ROOT_PASS}" shutdown 2>/dev/null || killall mysqld 2>/dev/null || true
 sleep 2
 
-if kill -0 $PHP_FPM_PID 2>/dev/null; then
-    echo "   ✅ PHP-FPM is running (PID: $PHP_FPM_PID)"
-else
-    echo "   ❌ PHP-FPM failed to start!"
-    exit 1
-fi
+echo "   ✅ MariaDB stopped"
 
 # ============================================
-# Step 9: Start Nginx
+# Step 9: Start Supervisor (manages all services)
 # ============================================
 echo ""
-echo "🌐 Step 9: Starting Nginx..."
-
-nginx -t 2>&1
-if [ $? -ne 0 ]; then
-    echo "   ❌ Nginx configuration test failed!"
-    exit 1
-fi
-
-nginx &
-NGINX_PID=$!
-
-sleep 2
-
-if kill -0 $NGINX_PID 2>/dev/null; then
-    echo "   ✅ Nginx is running (PID: $NGINX_PID)"
-else
-    echo "   ❌ Nginx failed to start!"
-    exit 1
-fi
-
-# ============================================
-# Step 10: Start Worker (Optional)
-# ============================================
-echo ""
-echo "⚙️  Step 10: Starting background worker..."
-
-if [ "${AUTO_START_WORKER:-true}" = "true" ]; then
-    su -s /bin/bash -c "php /var/www/html/worker.php --daemon --sleep=3" www-data > /var/www/html/storage/logs/worker.log 2>&1 &
-    WORKER_PID=$!
-    echo "   ✅ Worker is running (PID: $WORKER_PID)"
-else
-    echo "   ⏸️  Worker disabled (AUTO_START_WORKER=false)"
-fi
-
-# ============================================
-# Final Summary
-# ============================================
+echo "🎯 Step 9: Starting Supervisor..."
 echo ""
 echo "================================================"
-echo "✅ ALL SERVICES STARTED SUCCESSFULLY!"
+echo "✅ DATABASE SETUP COMPLETED!"
 echo "================================================"
-echo ""
-echo "📊 Service Status:"
-echo "   ✅ MariaDB    - localhost:3306"
-echo "   ✅ PHP-FPM    - 127.0.0.1:9000"
-echo "   ✅ Nginx      - 0.0.0.0:3000"
-echo "   ✅ Worker     - Background"
 echo ""
 echo "🗄️  Database:"
 echo "   Name: ${DB_NAME}"
@@ -260,14 +211,24 @@ echo "   URL: ${APP_URL}/admin"
 echo "   Email: ${ADMIN_EMAIL}"
 echo "   Password: ${ADMIN_PASSWORD}"
 echo ""
-echo "📝 Logs:"
-echo "   App: /var/www/html/storage/logs/"
-echo "   Migrations: /var/www/html/storage/logs/migrations.log"
-echo "   Admin Seed: /var/www/html/storage/logs/seed-admin.log"
+echo "📊 Supervisor will now start:"
+echo "   ✅ MariaDB    - localhost:3306"
+echo "   ✅ PHP-FPM    - 127.0.0.1:9000"
+echo "   ✅ Nginx      - 0.0.0.0:3000"
+echo "   ⏸️  Worker    - Manual start (supervisorctl start worker)"
+echo ""
+echo "📝 Logs: /var/www/html/storage/logs/"
 echo ""
 echo "🚀 System Ready!"
 echo "================================================"
 echo ""
 
-# Keep container running by tailing logs
-tail -f /var/www/html/storage/logs/*.log /dev/null
+# Enable worker if requested
+if [ "${AUTO_START_WORKER:-true}" = "true" ]; then
+    echo "⚙️  Worker will be started via Supervisor..."
+    # Update supervisor config to autostart worker
+    sed -i '/\[program:worker\]/,/user=www-data/ s/autostart=false/autostart=true/' /etc/supervisor/conf.d/services.conf
+fi
+
+# Start Supervisor (this will start MariaDB, PHP-FPM, Nginx, and optionally Worker)
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
