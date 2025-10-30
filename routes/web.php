@@ -874,3 +874,93 @@ $router->post('/admin/samples/{id}/reject', function($id) {
 
     redirect('/admin/samples/' . $id);
 });
+
+// Admin Product Colors
+$router->get('/admin/products/{id}/colors', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $product = $db->fetchOne("SELECT * FROM products WHERE id = ?", [(int)$id]);
+
+    if (!$product) {
+        $_SESSION['error_message'] = 'Ürün bulunamadı!';
+        redirect('/admin/products');
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/products/colors.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/products/{id}/colors/add', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $colorService = new App\Services\ColorCatalogService($db);
+
+        $data = [
+            'name' => $_POST['name'] ?? '',
+            'color_code' => $_POST['color_code'] ?? null,
+            'ral_code' => $_POST['ral_code'] ?? null,
+            'hex_color' => $_POST['hex_color_text'] ?? $_POST['hex_color'] ?? null,
+            'texture_type' => $_POST['texture_type'] ?? null,
+            'finish_type' => $_POST['finish_type'] ?? null,
+            'price_modifier' => !empty($_POST['price_modifier']) ? (float)$_POST['price_modifier'] : 0,
+            'price_modifier_type' => $_POST['price_modifier_type'] ?? 'fixed',
+            'stock_quantity' => (int)($_POST['stock_quantity'] ?? 0),
+            'is_available' => isset($_POST['is_available']) ? 1 : 0,
+        ];
+
+        $colorService->addColor((int)$id, $data);
+        $_SESSION['success_message'] = 'Renk başarıyla eklendi!';
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/products/' . $id . '/colors');
+});
+
+$router->post('/admin/products/{id}/colors/{colorId}/toggle', function($id, $colorId) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $colorService = new App\Services\ColorCatalogService($db);
+
+        $color = $colorService->getColorById((int)$colorId);
+        if ($color) {
+            $colorService->updateColor((int)$colorId, [
+                'is_available' => $color['is_available'] ? 0 : 1
+            ]);
+            $_SESSION['success_message'] = 'Renk durumu güncellendi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/products/' . $id . '/colors');
+});
+
+$router->post('/admin/products/{id}/colors/{colorId}/delete', function($id, $colorId) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $colorService = new App\Services\ColorCatalogService($db);
+
+        if ($colorService->deleteColor((int)$colorId)) {
+            $_SESSION['success_message'] = 'Renk başarıyla silindi!';
+        } else {
+            $_SESSION['error_message'] = 'Renk silinemedi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/products/' . $id . '/colors');
+});
