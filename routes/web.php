@@ -20,6 +20,48 @@ $router->get('/products', function() {
     return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 
+$router->get('/product/{slug}', function($slug) {
+    $db = container()->get(App\Core\Database::class);
+    $product = $db->fetch("SELECT * FROM products WHERE slug = ? AND status = 'active'", [$slug]);
+    if (!$product) redirect('/products');
+    ob_start();
+    include APP_PATH . '/Views/frontend/product-detail.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/cart', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/cart.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/cart/add', function() {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $db = container()->get(App\Core\Database::class);
+    $cartService = new App\Services\CartService($db);
+    $cartService->addItem((int)$_POST['product_id'], (int)($_POST['quantity'] ?? 1));
+    redirect('/cart');
+});
+
+$router->post('/cart/update', function() {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $db = container()->get(App\Core\Database::class);
+    $cartService = new App\Services\CartService($db);
+    $itemId = (int)$_POST['item_id'];
+    $item = $db->fetch("SELECT * FROM cart_items WHERE id = ?", [$itemId]);
+    $newQty = $_POST['action'] === 'increase' ? $item['quantity'] + 1 : max(1, $item['quantity'] - 1);
+    $cartService->updateQuantity($itemId, $newQty);
+    redirect('/cart');
+});
+
+$router->post('/cart/remove', function() {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $db = container()->get(App\Core\Database::class);
+    $cartService = new App\Services\CartService($db);
+    $cartService->removeItem((int)$_POST['item_id']);
+    redirect('/cart');
+});
+
 // Health check
 $router->get('/health', function() {
     return Response::json(['status' => 'ok']);
