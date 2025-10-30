@@ -153,3 +153,209 @@ $router->get('/admin/products', function() {
 
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
+
+// Admin Product Create - Show Form
+$router->get('/admin/products/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/products/form.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Admin Product Create - Handle Submission
+$router->post('/admin/products/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $productService = new App\Services\ProductService($db);
+
+        // Prepare product data
+        $data = [
+            'sku' => $_POST['sku'] ?? '',
+            'name' => $_POST['name'] ?? '',
+            'slug' => generateSlug($_POST['name'] ?? ''),
+            'short_description' => $_POST['short_description'] ?? null,
+            'description' => $_POST['description'] ?? null,
+            'base_price' => (float) ($_POST['base_price'] ?? 0),
+            'compare_price' => !empty($_POST['compare_price']) ? (float) $_POST['compare_price'] : null,
+            'cost_price' => !empty($_POST['cost_price']) ? (float) $_POST['cost_price'] : null,
+            'track_inventory' => isset($_POST['track_inventory']) ? 1 : 0,
+            'stock_quantity' => (int) ($_POST['stock_quantity'] ?? 0),
+            'low_stock_threshold' => (int) ($_POST['low_stock_threshold'] ?? 10),
+            'allow_backorder' => isset($_POST['allow_backorder']) ? 1 : 0,
+            'weight_kg' => !empty($_POST['weight_kg']) ? (float) $_POST['weight_kg'] : null,
+            'length_mm' => !empty($_POST['length_mm']) ? (float) $_POST['length_mm'] : null,
+            'width_mm' => !empty($_POST['width_mm']) ? (float) $_POST['width_mm'] : null,
+            'height_mm' => !empty($_POST['height_mm']) ? (float) $_POST['height_mm'] : null,
+            'selling_unit' => $_POST['selling_unit'] ?? 'piece',
+            'package_quantity' => (int) ($_POST['package_quantity'] ?? 1),
+            'status' => $_POST['status'] ?? 'draft',
+            'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+            'is_new' => isset($_POST['is_new']) ? 1 : 0,
+            'is_b2b_only' => isset($_POST['is_b2b_only']) ? 1 : 0,
+            'min_order_quantity' => (int) ($_POST['min_order_quantity'] ?? 1),
+            'max_order_quantity' => !empty($_POST['max_order_quantity']) ? (int) $_POST['max_order_quantity'] : null,
+            'meta_title' => $_POST['meta_title'] ?? null,
+            'meta_description' => $_POST['meta_description'] ?? null,
+            'meta_keywords' => $_POST['meta_keywords'] ?? null,
+        ];
+
+        // Insert product
+        $productId = $db->insert('products', $data);
+
+        // Handle category assignment
+        if (!empty($_POST['category_id'])) {
+            $db->insert('product_categories', [
+                'product_id' => $productId,
+                'category_id' => (int) $_POST['category_id'],
+                'is_primary' => 1,
+            ]);
+        }
+
+        // Set success message
+        $_SESSION['success_message'] = 'Ürün başarıyla oluşturuldu!';
+
+        // Redirect to products list
+        header('Location: /admin/products');
+        exit;
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/products/create');
+        exit;
+    }
+});
+
+// Admin Product Edit - Show Form
+$router->get('/admin/products/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+
+        // Get product
+        $product = $db->fetch("SELECT * FROM products WHERE id = ?", [(int) $id]);
+
+        if (!$product) {
+            $_SESSION['error_message'] = 'Ürün bulunamadı!';
+            header('Location: /admin/products');
+            exit;
+        }
+
+        // Get primary category
+        $categoryResult = $db->fetch(
+            "SELECT category_id FROM product_categories WHERE product_id = ? AND is_primary = 1",
+            [(int) $id]
+        );
+        if ($categoryResult) {
+            $product['category_id'] = $categoryResult['category_id'];
+        }
+
+        ob_start();
+        include APP_PATH . '/Views/admin/products/form.php';
+        $html = ob_get_clean();
+
+        return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/products');
+        exit;
+    }
+});
+
+// Admin Product Edit - Handle Submission
+$router->post('/admin/products/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+
+        // Prepare product data
+        $data = [
+            'name' => $_POST['name'] ?? '',
+            'slug' => generateSlug($_POST['name'] ?? ''),
+            'short_description' => $_POST['short_description'] ?? null,
+            'description' => $_POST['description'] ?? null,
+            'base_price' => (float) ($_POST['base_price'] ?? 0),
+            'compare_price' => !empty($_POST['compare_price']) ? (float) $_POST['compare_price'] : null,
+            'cost_price' => !empty($_POST['cost_price']) ? (float) $_POST['cost_price'] : null,
+            'track_inventory' => isset($_POST['track_inventory']) ? 1 : 0,
+            'stock_quantity' => (int) ($_POST['stock_quantity'] ?? 0),
+            'low_stock_threshold' => (int) ($_POST['low_stock_threshold'] ?? 10),
+            'allow_backorder' => isset($_POST['allow_backorder']) ? 1 : 0,
+            'weight_kg' => !empty($_POST['weight_kg']) ? (float) $_POST['weight_kg'] : null,
+            'length_mm' => !empty($_POST['length_mm']) ? (float) $_POST['length_mm'] : null,
+            'width_mm' => !empty($_POST['width_mm']) ? (float) $_POST['width_mm'] : null,
+            'height_mm' => !empty($_POST['height_mm']) ? (float) $_POST['height_mm'] : null,
+            'selling_unit' => $_POST['selling_unit'] ?? 'piece',
+            'package_quantity' => (int) ($_POST['package_quantity'] ?? 1),
+            'status' => $_POST['status'] ?? 'draft',
+            'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+            'is_new' => isset($_POST['is_new']) ? 1 : 0,
+            'is_b2b_only' => isset($_POST['is_b2b_only']) ? 1 : 0,
+            'min_order_quantity' => (int) ($_POST['min_order_quantity'] ?? 1),
+            'max_order_quantity' => !empty($_POST['max_order_quantity']) ? (int) $_POST['max_order_quantity'] : null,
+            'meta_title' => $_POST['meta_title'] ?? null,
+            'meta_description' => $_POST['meta_description'] ?? null,
+            'meta_keywords' => $_POST['meta_keywords'] ?? null,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        // Update product
+        $db->update('products', $data, ['id' => (int) $id]);
+
+        // Update category assignment
+        if (!empty($_POST['category_id'])) {
+            // Delete existing primary category
+            $db->query("DELETE FROM product_categories WHERE product_id = ? AND is_primary = 1", [(int) $id]);
+
+            // Insert new primary category
+            $db->insert('product_categories', [
+                'product_id' => (int) $id,
+                'category_id' => (int) $_POST['category_id'],
+                'is_primary' => 1,
+            ]);
+        }
+
+        // Set success message
+        $_SESSION['success_message'] = 'Ürün başarıyla güncellendi!';
+
+        // Redirect to products list
+        header('Location: /admin/products');
+        exit;
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/products/edit/' . $id);
+        exit;
+    }
+});

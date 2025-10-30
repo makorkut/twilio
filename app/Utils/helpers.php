@@ -90,3 +90,29 @@ if (!function_exists('view')) {
         return ob_get_clean();
     }
 }
+
+if (!function_exists('generateSlug')) {
+    /**
+     * Generate URL-friendly slug from text
+     * Supports Turkish characters
+     */
+    function generateSlug(string $text): string
+    {
+        // Turkish character map
+        $charMap = [
+            'Ç' => 'C', 'ç' => 'c',
+            'Ğ' => 'G', 'ğ' => 'g',
+            'İ' => 'I', 'ı' => 'i',
+            'Ö' => 'O', 'ö' => 'o',
+            'Ş' => 'S', 'ş' => 's',
+            'Ü' => 'U', 'ü' => 'u',
+        ];
+
+        $slug = strtr($text, $charMap);
+        $slug = strtolower($slug);
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
+        $slug = trim($slug, '-');
+
+        return $slug;
+    }
+}
