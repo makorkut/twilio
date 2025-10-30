@@ -1,77 +1,56 @@
 <?php
-
 /**
- * API Routes (v1)
+ * API Routes v1
  */
 
 use App\Http\Response;
 use App\Controllers\Api\ProductApiController;
-use App\Controllers\Admin\ProductController;
-use App\Controllers\Admin\MediaController;
-use App\Controllers\Admin\CategoryController;
-use App\Controllers\Admin\OrderController;
-use App\Controllers\Admin\UserController;
 
-// Health check
+// API Health
 $router->get('/api/v1/health', function() {
-    return Response::json([
-        'status' => 'ok',
-        'timestamp' => time()
-    ]);
+    return Response::json(['status' => 'ok', 'version' => '1.0']);
 });
 
-// Public API - Products
+// Products API
 $router->get('/api/v1/products', [ProductApiController::class, 'index']);
-$router->get('/api/v1/products/{slug}', [ProductApiController::class, 'show']);
-$router->get('/api/v1/products/{id}/price', [ProductApiController::class, 'calculatePrice']);
+$router->get('/api/v1/products/{id}', [ProductApiController::class, 'show']);
+$router->post('/api/v1/products', [ProductApiController::class, 'store']);
 
-// Admin API - Products (requires auth)
-$router->get('/api/v1/admin/products', [ProductController::class, 'index']);
-$router->get('/api/v1/admin/products/{id}', [ProductController::class, 'show']);
-$router->post('/api/v1/admin/products', [ProductController::class, 'store']);
-$router->put('/api/v1/admin/products/{id}', [ProductController::class, 'update']);
-$router->delete('/api/v1/admin/products/{id}', [ProductController::class, 'delete']);
-$router->post('/api/v1/admin/products/bulk-import', [ProductController::class, 'bulkImport']);
-$router->post('/api/v1/admin/products/{id}/media', [ProductController::class, 'attachMedia']);
-$router->delete('/api/v1/admin/products/{id}/media', [ProductController::class, 'detachMedia']);
-$router->put('/api/v1/admin/products/{id}/prices', [ProductController::class, 'updatePrices']);
-$router->post('/api/v1/admin/products/{id}/duplicate', [ProductController::class, 'duplicate']);
-$router->get('/api/v1/admin/products/statistics', [ProductController::class, 'statistics']);
-$router->get('/api/v1/admin/products/pending-sync', [ProductController::class, 'pendingSync']);
+// Orders API
+$router->get('/api/v1/orders', function() {
+    $db = container()->get(App\Core\Database::class);
+    $orderService = new App\Services\OrderService($db);
+    $orders = $orderService->search([], (int)($_GET['limit'] ?? 50), 0);
+    return Response::json(['success' => true, 'data' => $orders]);
+});
 
-// Admin API - Media
-$router->get('/api/v1/admin/media', [MediaController::class, 'index']);
-$router->get('/api/v1/admin/media/{id}', [MediaController::class, 'show']);
-$router->post('/api/v1/admin/media/upload', [MediaController::class, 'upload']);
-$router->post('/api/v1/admin/media/download-from-url', [MediaController::class, 'downloadFromUrl']);
-$router->put('/api/v1/admin/media/{id}', [MediaController::class, 'update']);
-$router->delete('/api/v1/admin/media/{id}', [MediaController::class, 'delete']);
-$router->post('/api/v1/admin/media/{id}/tags', [MediaController::class, 'attachTag']);
-$router->delete('/api/v1/admin/media/{id}/tags', [MediaController::class, 'detachTag']);
-$router->post('/api/v1/admin/media/{id}/categories', [MediaController::class, 'attachCategory']);
-$router->get('/api/v1/admin/media/by-sku', [MediaController::class, 'getBySku']);
-$router->post('/api/v1/admin/media/bulk-attach-by-sku', [MediaController::class, 'bulkAttachBySku']);
-$router->get('/api/v1/admin/media/tags', [MediaController::class, 'getTags']);
-$router->get('/api/v1/admin/media/categories', [MediaController::class, 'getCategories']);
-$router->get('/api/v1/admin/media/statistics', [MediaController::class, 'statistics']);
+$router->post('/api/v1/orders', function() {
+    $db = container()->get(App\Core\Database::class);
+    $orderService = new App\Services\OrderService($db);
+    $data = json_decode(file_get_contents('php://input'), true);
+    $orderId = $orderService->create($data);
+    return Response::json(['success' => true, 'data' => ['id' => $orderId]], 201);
+});
 
-// Admin API - Categories
-$router->get('/api/v1/admin/categories', [CategoryController::class, 'index']);
-$router->get('/api/v1/admin/categories/{id}', [CategoryController::class, 'show']);
-$router->post('/api/v1/admin/categories', [CategoryController::class, 'store']);
-$router->put('/api/v1/admin/categories/{id}', [CategoryController::class, 'update']);
-$router->delete('/api/v1/admin/categories/{id}', [CategoryController::class, 'delete']);
-$router->get('/api/v1/admin/categories/tree', [CategoryController::class, 'tree']);
+// Cart API
+$router->post('/api/v1/cart/items', function() {
+    $db = container()->get(App\Core\Database::class);
+    $cartService = new App\Services\CartService($db);
+    $data = json_decode(file_get_contents('php://input'), true);
+    $itemId = $cartService->addItem((int)$data['product_id'], (int)($data['quantity'] ?? 1));
+    return Response::json(['success' => true, 'data' => ['item_id' => $itemId]], 201);
+});
 
-// Admin API - Orders
-$router->get('/api/v1/admin/orders', [OrderController::class, 'index']);
-$router->get('/api/v1/admin/orders/{id}', [OrderController::class, 'show']);
-$router->put('/api/v1/admin/orders/{id}/status', [OrderController::class, 'updateStatus']);
-$router->get('/api/v1/admin/orders/statistics', [OrderController::class, 'statistics']);
+// Webhook
+$router->post('/api/v1/webhooks/product-sync', function() {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $db = container()->get(App\Core\Database::class);
 
-// Admin API - Users
-$router->get('/api/v1/admin/users', [UserController::class, 'index']);
-$router->get('/api/v1/admin/users/{id}', [UserController::class, 'show']);
-$router->post('/api/v1/admin/users', [UserController::class, 'store']);
-$router->put('/api/v1/admin/users/{id}', [UserController::class, 'update']);
-$router->delete('/api/v1/admin/users/{id}', [UserController::class, 'delete']);
+    $db->insert('webhook_logs', [
+        'event_type' => 'product_sync',
+        'payload' => json_encode($data),
+        'received_at' => date('Y-m-d H:i:s')
+    ]);
+
+    return Response::json(['success' => true, 'message' => 'Webhook received']);
+});
