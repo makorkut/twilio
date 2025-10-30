@@ -156,6 +156,26 @@ ob_start();
                     </div>
                 <?php endif; ?>
 
+                <!-- QR Code -->
+                <?php
+                $db = container()->get(App\Core\Database::class);
+                $qrService = new App\Services\QRCodeService($db);
+                $qrCode = $qrService->getProductQRCode($product['id']);
+                if ($qrCode):
+                ?>
+                    <div style="padding: 20px; background: var(--color-bg-gray); border-radius: 8px; margin-bottom: 24px; display: flex; align-items: center; gap: 20px;">
+                        <img src="/<?= htmlspecialchars($qrCode['file_path']) ?>"
+                             alt="QR Code"
+                             style="width: 100px; height: 100px; border: 2px solid white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div>
+                            <h4 style="margin-bottom: 8px; font-weight: 600; font-size: 16px;">📱 Bu Ürünü Mobil Cihazınızdan Görüntüleyin</h4>
+                            <p style="color: var(--color-text-light); font-size: 14px; margin: 0;">
+                                QR kodu tarayarak ürün bilgilerine anında ulaşabilirsiniz
+                            </p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Specs -->
                 <?php if ($product['length_mm'] || $product['width_mm'] || $product['weight_kg']): ?>
                 <div class="product-specs">

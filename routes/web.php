@@ -964,3 +964,111 @@ $router->post('/admin/products/{id}/colors/{colorId}/delete', function($id, $col
 
     redirect('/admin/products/' . $id . '/colors');
 });
+
+// Admin Product QR Codes
+$router->get('/admin/products/{id}/qrcode', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $product = $db->fetchOne("SELECT * FROM products WHERE id = ?", [(int)$id]);
+
+    if (!$product) {
+        $_SESSION['error_message'] = 'Ürün bulunamadı!';
+        redirect('/admin/products');
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/products/qrcode.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/products/{id}/qrcode/generate', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $qrService = new App\Services\QRCodeService($db);
+
+        $options = [
+            'size' => (int)($_POST['size'] ?? 300),
+            'format' => 'png'
+        ];
+
+        $qrService->generateForProduct((int)$id, $options);
+        $_SESSION['success_message'] = 'QR kod başarıyla oluşturuldu!';
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/products/' . $id . '/qrcode');
+});
+
+$router->post('/admin/products/{id}/qrcode/regenerate', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $qrService = new App\Services\QRCodeService($db);
+
+        // Get existing QR code to preserve settings
+        $existingQR = $qrService->getProductQRCode((int)$id);
+        $options = [
+            'size' => $existingQR['size'] ?? 300,
+            'format' => 'png'
+        ];
+
+        // Delete old QR code
+        if ($existingQR) {
+            $qrService->delete($existingQR['id']);
+        }
+
+        // Generate new one
+        $qrService->generateForProduct((int)$id, $options);
+        $_SESSION['success_message'] = 'QR kod yeniden oluşturuldu!';
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/products/' . $id . '/qrcode');
+});
+
+// Batch QR Code Generation
+$router->get('/admin/qrcodes/batch', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/qrcodes/batch.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/qrcodes/batch/generate', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $qrService = new App\Services\QRCodeService($db);
+
+        $productIds = $_POST['product_ids'] ?? [];
+        if (empty($productIds)) {
+            throw new \Exception('Lütfen en az bir ürün seçin');
+        }
+
+        $options = [
+            'size' => (int)($_POST['size'] ?? 300)
+        ];
+
+        $results = $qrService->generateBatch($productIds, $options);
+
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+        $_SESSION['success_message'] = "{$successCount} ürün için QR kod oluşturuldu!";
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/qrcodes/batch');
+});

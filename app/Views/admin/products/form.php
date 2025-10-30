@@ -583,6 +583,20 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <!-- Advanced Tools (Edit Mode Only) -->
+            <?php if ($isEdit): ?>
+            <div class="form-section">
+                <h3 class="form-section-title">🔧 Gelişmiş Araçlar</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <a href="/admin/products/<?= $product['id'] ?>/colors" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+                        🎨 Renk & Doku Yönetimi
+                    </a>
+                    <a href="/admin/products/<?= $product['id'] ?>/qrcode" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+                        📱 QR Kod Oluştur
+                    </a>
+                </div>
+            </div>
             <?php endif; ?>
         </div>
     </div>
