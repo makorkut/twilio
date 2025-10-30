@@ -1072,3 +1072,75 @@ $router->post('/admin/qrcodes/batch/generate', function() {
 
     redirect('/admin/qrcodes/batch');
 });
+
+// Admin Catalogs
+$router->get('/admin/catalogs', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/catalogs/list.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/catalogs/generate', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/catalogs/generate.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/catalogs/generate', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $catalogService = new App\Services\PDFCatalogService($db);
+
+        $options = [
+            'title' => $_POST['title'] ?? 'Ürün Kataloğu',
+            'layout' => $_POST['layout'] ?? 'detailed',
+            'include_images' => isset($_POST['include_images']),
+            'include_prices' => isset($_POST['include_prices']),
+        ];
+
+        // Determine product selection
+        $selectionType = $_POST['selection_type'] ?? 'all';
+        if ($selectionType === 'category' && !empty($_POST['category_id'])) {
+            $options['category_id'] = (int)$_POST['category_id'];
+        } elseif ($selectionType === 'custom' && !empty($_POST['product_ids'])) {
+            $options['product_ids'] = array_map('intval', $_POST['product_ids']);
+        }
+
+        $filepath = $catalogService->generateCatalog($options);
+        $_SESSION['success_message'] = 'Katalog başarıyla oluşturuldu!';
+        $_SESSION['last_catalog'] = $filepath;
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/catalogs');
+});
+
+$router->post('/admin/catalogs/{id}/delete', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $catalogService = new App\Services\PDFCatalogService($db);
+
+        if ($catalogService->delete((int)$id)) {
+            $_SESSION['success_message'] = 'Katalog silindi!';
+        } else {
+            $_SESSION['error_message'] = 'Katalog silinemedi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/catalogs');
+});

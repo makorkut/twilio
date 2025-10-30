@@ -91,3 +91,30 @@ INSERT INTO i18n_keys (`group`, dot_key, description) VALUES
 ('checkout', 'payment_method', 'Payment method'),
 ('checkout', 'place_order', 'Place order button')
 ON DUPLICATE KEY UPDATE description=VALUES(description);
+
+-- ============================================
+-- Currencies Table (required by 002_multi_currency_pricing.sql)
+-- ============================================
+CREATE TABLE IF NOT EXISTS currencies (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  code VARCHAR(3) NOT NULL UNIQUE COMMENT 'ISO 4217 currency code',
+  name VARCHAR(100) NOT NULL,
+  symbol VARCHAR(10) NOT NULL,
+  symbol_direction ENUM('left', 'right') DEFAULT 'left' COMMENT 'Symbol position',
+  decimal_separator CHAR(1) DEFAULT ',',
+  thousands_separator CHAR(1) DEFAULT '.',
+  exchange_rate DECIMAL(18,6) DEFAULT 1.000000 COMMENT 'Rate to base currency',
+  status TINYINT(1) DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_code (code),
+  INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default currencies
+INSERT IGNORE INTO currencies (code, name, symbol, symbol_direction, exchange_rate, status) VALUES
+('TRY', 'Turkish Lira', '₺', 'right', 1.000000, 1),
+('EUR', 'Euro', '€', 'left', 0.030000, 1),
+('USD', 'US Dollar', '$', 'left', 0.028000, 1),
+('GBP', 'British Pound', '£', 'left', 0.025000, 1);
