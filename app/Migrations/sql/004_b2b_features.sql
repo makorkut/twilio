@@ -122,12 +122,10 @@ CREATE TABLE IF NOT EXISTS product_relations (
   external_id VARCHAR(255) DEFAULT NULL COMMENT 'localid',
 
   UNIQUE KEY uniq_product_relation (product_id, related_product_id, relation_type),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (related_product_id) REFERENCES products(id) ON DELETE CASCADE,
-
+  INDEX idx_product_id (product_id),
   INDEX idx_related (related_product_id),
   INDEX idx_relation_type (relation_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='FK to products will be added in migration 008';
 
 -- Seed default customer groups
 INSERT INTO customer_groups (name, slug, discount_percent, credit_limit, payment_term_days, is_default) VALUES

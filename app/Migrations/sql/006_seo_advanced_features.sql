@@ -67,8 +67,6 @@ CREATE TABLE IF NOT EXISTS product_documents (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
 
-  INDEX idx_product_id (product_id) NOT NULL,
-
   document_type ENUM('cad','technical-drawing','installation-guide','certificate','msds','tds','warranty','manual','other') NOT NULL,
   title VARCHAR(255) NOT NULL,
   file_path VARCHAR(500) NOT NULL,
@@ -111,11 +109,10 @@ CREATE TABLE IF NOT EXISTS product_colors (
 CREATE TABLE IF NOT EXISTS product_color_options (
   id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
   color_id INT NOT NULL,
 
   UNIQUE KEY uniq_product_color (product_id, color_id),
+  INDEX idx_product_id (product_id),
   FOREIGN KEY (color_id) REFERENCES product_colors(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -150,8 +147,6 @@ CREATE TABLE IF NOT EXISTS project_products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   project_id INT NOT NULL,
   product_id INT,
-
-  INDEX idx_product_id (product_id) NOT NULL,
   quantity_used INT DEFAULT NULL,
 
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
@@ -195,9 +190,7 @@ CREATE TABLE IF NOT EXISTS themes (
 CREATE TABLE IF NOT EXISTS subscriptions (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id INT NOT NULL,
-  product_id INT,
-
-  INDEX idx_product_id (product_id) DEFAULT NULL,
+  product_id INT DEFAULT NULL,
 
   plan_interval ENUM('monthly','yearly') DEFAULT 'monthly',
   status ENUM('active','paused','canceled','expired') DEFAULT 'active',
@@ -218,6 +211,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 
   INDEX idx_user_id (user_id),
+  INDEX idx_product_id (product_id),
   INDEX idx_status (status),
   INDEX idx_next_billing (next_billing_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -86,12 +86,18 @@ CREATE TABLE IF NOT EXISTS orders (
   -- Pricing
   currency_code VARCHAR(3) NOT NULL,
   exchange_rate DECIMAL(10,6) DEFAULT 1 COMMENT 'Rate at order time',
+  settled_currency VARCHAR(3) DEFAULT 'TRY' COMMENT 'Settlement currency',
+  display_rate_timestamp TIMESTAMP NULL COMMENT 'When rate was displayed',
 
   subtotal DECIMAL(18,4) NOT NULL COMMENT 'Sum of item totals',
   discount_amount DECIMAL(18,4) DEFAULT 0,
   tax_amount DECIMAL(18,4) NOT NULL,
   shipping_amount DECIMAL(18,4) DEFAULT 0,
   grand_total DECIMAL(18,4) NOT NULL,
+
+  -- Fraud Detection (from migration 007)
+  fraud_score INT DEFAULT 0 COMMENT 'Risk score 0-100',
+  risk_status ENUM('low','medium','high') DEFAULT 'low' COMMENT 'Risk level',
 
   -- Payment
   payment_method VARCHAR(50) DEFAULT NULL COMMENT 'stripe, iyzico, bank_transfer',
