@@ -2,6 +2,18 @@
 -- Migration 010: Orders & Shopping Cart
 -- ============================================
 
+-- Drop tables if they exist (for clean re-run after errors)
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS coupon_usage;
+DROP TABLE IF EXISTS coupons;
+DROP TABLE IF EXISTS order_status_history;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS addresses;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS cart;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- Shopping Cart
 CREATE TABLE IF NOT EXISTS cart (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -30,7 +42,7 @@ CREATE TABLE IF NOT EXISTS cart (
   INDEX idx_session_id (session_id),
   INDEX idx_status (status),
   INDEX idx_created_at (created_at),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Cart Items
@@ -58,9 +70,9 @@ CREATE TABLE IF NOT EXISTS cart_items (
 
   INDEX idx_cart_id (cart_id),
   INDEX idx_product_id (product_id),
-  FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+  CONSTRAINT fk_cart_items_cart FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cart_items_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cart_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Orders
@@ -136,8 +148,8 @@ CREATE TABLE IF NOT EXISTS orders (
   INDEX idx_status (status),
   INDEX idx_payment_status (payment_status),
   INDEX idx_created_at (created_at),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-  FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL
+  CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_orders_customer_group FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Order Items
@@ -172,9 +184,9 @@ CREATE TABLE IF NOT EXISTS order_items (
 
   INDEX idx_order_id (order_id),
   INDEX idx_product_id (product_id),
-  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
-  FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
+  CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+  CONSTRAINT fk_order_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Addresses
@@ -211,7 +223,7 @@ CREATE TABLE IF NOT EXISTS addresses (
 
   INDEX idx_user_id (user_id),
   INDEX idx_country_code (country_code),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Order Address Snapshots
@@ -244,8 +256,8 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 
   INDEX idx_order_id (order_id),
   INDEX idx_created_at (created_at),
-  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-  FOREIGN KEY (changed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_order_status_history_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_order_status_history_user FOREIGN KEY (changed_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Coupons
@@ -302,7 +314,7 @@ CREATE TABLE IF NOT EXISTS coupon_usage (
   INDEX idx_coupon_id (coupon_id),
   INDEX idx_order_id (order_id),
   INDEX idx_user_id (user_id),
-  FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
-  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  CONSTRAINT fk_coupon_usage_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+  CONSTRAINT fk_coupon_usage_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_coupon_usage_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
