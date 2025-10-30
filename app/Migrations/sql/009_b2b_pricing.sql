@@ -81,21 +81,31 @@ CREATE TABLE IF NOT EXISTS product_currency_prices (
   UNIQUE KEY uniq_product_currency (product_id, currency_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tax Classes
-CREATE TABLE IF NOT EXISTS tax_classes (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+-- NOTE: tax_classes table created in migration 002
+-- Extending with additional columns if needed
 
-  name VARCHAR(100) NOT NULL,
-  code VARCHAR(50) NOT NULL UNIQUE,
-  default_rate DECIMAL(5,2) NOT NULL COMMENT 'e.g., 20.00 for 20% VAT',
+ALTER TABLE tax_classes
+ADD COLUMN IF NOT EXISTS code VARCHAR(50) AFTER name,
+ADD COLUMN IF NOT EXISTS default_rate DECIMAL(5,2) DEFAULT NULL AFTER code,
+ADD COLUMN IF NOT EXISTS is_active TINYINT(1) DEFAULT 1 AFTER default_rate,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
 
-  is_active TINYINT(1) DEFAULT 1,
+-- Update default_rate from rate_percent if needed
+UPDATE tax_classes SET default_rate = rate_percent WHERE default_rate IS NULL;
 
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+-- Add unique code if it doesn't exist
+SET @tax_code_index_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                          WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'tax_classes'
+                          AND INDEX_NAME = 'code');
 
-  INDEX idx_code (code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+SET @sql = IF(@tax_code_index_check = 0,
+  'ALTER TABLE tax_classes ADD UNIQUE KEY code (code)',
+  'SELECT "Index already exists"');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Tax Rates by Region
 CREATE TABLE IF NOT EXISTS tax_rates (
