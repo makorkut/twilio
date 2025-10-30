@@ -331,3 +331,12 @@ FOREIGN KEY (clicked_product_id) REFERENCES products(id) ON DELETE SET NULL;
 ALTER TABLE fraud_checks
 ADD CONSTRAINT fk_fraud_checks_product
 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
+
+-- From migration 004: product_relations -> products (both directions)
+ALTER TABLE product_relations
+ADD CONSTRAINT fk_product_relations_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+ALTER TABLE product_relations
+ADD CONSTRAINT fk_product_relations_related
+FOREIGN KEY (related_product_id) REFERENCES products(id) ON DELETE CASCADE;
