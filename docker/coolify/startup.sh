@@ -97,7 +97,7 @@ cat > /var/www/html/.env <<ENVEOF
 # Application
 APP_NAME=${APP_NAME:-E-Commerce}
 APP_ENV=${APP_ENV:-production}
-APP_DEBUG=${APP_DEBUG:-false}
+APP_DEBUG=${APP_DEBUG:-true}
 APP_URL=${APP_URL:-http://localhost}
 APP_TIMEZONE=Europe/Istanbul
 
@@ -156,6 +156,10 @@ if php app/Migrations/apply.php 2>&1 | tee /var/www/html/storage/logs/migrations
     echo "   ✅ Migrations completed"
 else
     echo "   ⚠️  Migrations failed (check logs/migrations.log)"
+    echo ""
+    echo "   Last 20 lines of migration log:"
+    tail -n 20 /var/www/html/storage/logs/migrations.log
+    echo ""
 fi
 
 # ============================================
@@ -178,6 +182,10 @@ if php app/Migrations/seed-admin.php 2>&1 | tee /var/www/html/storage/logs/seed-
     echo "   Password: ${ADMIN_PASSWORD}"
 else
     echo "   ⚠️  Admin user creation failed (check logs/seed-admin.log)"
+    echo ""
+    echo "   Last 20 lines of seed log:"
+    tail -n 20 /var/www/html/storage/logs/seed-admin.log
+    echo ""
 fi
 
 # ============================================
