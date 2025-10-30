@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     nginx \
     supervisor \
+    mariadb-server \
+    mariadb-client \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -84,11 +86,15 @@ RUN mkdir -p \
     storage/uploads/media \
     public/uploads/media \
     bootstrap/cache \
+    /var/lib/mysql \
+    /var/run/mysqld \
     && chown -R www-data:www-data \
         storage \
         public/uploads \
         bootstrap/cache \
-    && chmod -R 755 storage public/uploads bootstrap/cache
+    && chmod -R 755 storage public/uploads bootstrap/cache \
+    && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
+    && chmod 755 /var/run/mysqld
 
 # PHP Production Configuration
 RUN { \
@@ -199,17 +205,27 @@ RUN rm -f /etc/nginx/sites-enabled/default && \
 } > /etc/nginx/sites-available/default && \
 ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
-# Supervisor Configuration (runs both Nginx and PHP-FPM)
+# Supervisor Configuration (runs MariaDB, Nginx, PHP-FPM, and Worker)
 RUN { \
     echo '[supervisord]'; \
     echo 'nodaemon=true'; \
     echo 'logfile=/var/www/html/storage/logs/supervisord.log'; \
     echo 'pidfile=/var/run/supervisord.pid'; \
     echo ''; \
+    echo '[program:mariadb]'; \
+    echo 'command=/usr/bin/mysqld_safe --datadir=/var/lib/mysql'; \
+    echo 'autostart=true'; \
+    echo 'autorestart=true'; \
+    echo 'priority=1'; \
+    echo 'stdout_logfile=/var/www/html/storage/logs/mariadb-stdout.log'; \
+    echo 'stderr_logfile=/var/www/html/storage/logs/mariadb-stderr.log'; \
+    echo 'user=mysql'; \
+    echo ''; \
     echo '[program:php-fpm]'; \
     echo 'command=php-fpm'; \
     echo 'autostart=true'; \
     echo 'autorestart=true'; \
+    echo 'priority=10'; \
     echo 'stdout_logfile=/var/www/html/storage/logs/php-fpm-stdout.log'; \
     echo 'stderr_logfile=/var/www/html/storage/logs/php-fpm-stderr.log'; \
     echo ''; \
@@ -217,6 +233,7 @@ RUN { \
     echo 'command=nginx -g "daemon off;"'; \
     echo 'autostart=true'; \
     echo 'autorestart=true'; \
+    echo 'priority=10'; \
     echo 'stdout_logfile=/var/www/html/storage/logs/nginx-stdout.log'; \
     echo 'stderr_logfile=/var/www/html/storage/logs/nginx-stderr.log'; \
     echo ''; \
@@ -224,6 +241,7 @@ RUN { \
     echo 'command=php /var/www/html/worker.php --daemon --sleep=3'; \
     echo 'autostart=false'; \
     echo 'autorestart=false'; \
+    echo 'priority=20'; \
     echo 'stdout_logfile=/var/www/html/storage/logs/worker-stdout.log'; \
     echo 'stderr_logfile=/var/www/html/storage/logs/worker-stderr.log'; \
     echo 'user=www-data'; \

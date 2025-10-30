@@ -6,6 +6,45 @@ echo "🚀 Starting E-Commerce Application (Coolify)"
 echo "================================================"
 echo ""
 
+# Function to initialize MariaDB
+initialize_mariadb() {
+    echo "🔧 Initializing MariaDB..."
+
+    # Check if MySQL data directory is already initialized
+    if [ ! -d "/var/lib/mysql/mysql" ]; then
+        echo "📦 First run - initializing MySQL data directory..."
+        mysql_install_db --user=mysql --datadir=/var/lib/mysql --skip-test-db
+        echo "✅ MySQL data directory initialized"
+    else
+        echo "✅ MySQL data directory already exists"
+    fi
+}
+
+# Function to setup database and user
+setup_database() {
+    echo "🗄️  Setting up database and user..."
+
+    local db_name="${DB_DATABASE:-ecommerce_db}"
+    local db_user="${DB_USERNAME:-ecommerce_user}"
+    local db_pass="${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}"
+    local db_root_pass="${DB_ROOT_PASSWORD:-R00t!S3cur3P@ss2024}"
+
+    # Wait a moment for MariaDB to fully start
+    sleep 3
+
+    # Create database and user
+    mysql -u root <<-EOSQL
+        CREATE DATABASE IF NOT EXISTS \`${db_name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        CREATE USER IF NOT EXISTS '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
+        GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'localhost';
+        GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'%';
+        SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${db_root_pass}');
+        FLUSH PRIVILEGES;
+EOSQL
+
+    echo "✅ Database '${db_name}' and user '${db_user}' created successfully"
+}
+
 # Function to wait for database
 wait_for_database() {
     echo "⏳ Waiting for database to be ready..."
@@ -53,11 +92,11 @@ APP_URL=${APP_URL:-http://localhost}
 
 # Database
 DB_CONNECTION=mysql
-DB_HOST=${DB_HOST:-mysql}
+DB_HOST=${DB_HOST:-localhost}
 DB_PORT=${DB_PORT:-3306}
-DB_DATABASE=${DB_DATABASE:-polyurethane_ecommerce}
+DB_DATABASE=${DB_DATABASE:-ecommerce_db}
 DB_USERNAME=${DB_USERNAME:-ecommerce_user}
-DB_PASSWORD=${DB_PASSWORD:-secret}
+DB_PASSWORD=${DB_PASSWORD:-Ec0mm3rc3!S3cur3P@ss}
 
 # Default Settings
 DEFAULT_LANG=${DEFAULT_LANG:-tr}
@@ -187,6 +226,9 @@ display_info() {
 
 # Main execution
 main() {
+    # Initialize MariaDB data directory (first time only)
+    initialize_mariadb
+
     # Create .env file immediately (don't wait for database)
     create_env_file
 
@@ -196,11 +238,21 @@ main() {
     # Display info
     display_info
 
-    # Start supervisor (Nginx + PHP-FPM + Worker) IMMEDIATELY
+    # Start supervisor (MariaDB + Nginx + PHP-FPM + Worker)
     echo "🎬 Starting services with Supervisor..."
-    echo "   (Database migrations will run in background)"
+    echo "   (MariaDB will start first, then migrations will run)"
 
-    # Run database setup in background
+    # Start supervisor in background to let MariaDB start
+    /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+    SUPERVISOR_PID=$!
+
+    # Wait for MariaDB to start via supervisor
+    sleep 5
+
+    # Setup database and user (first time or if not exists)
+    setup_database
+
+    # Run database setup
     (
         # Wait for database
         if wait_for_database; then
@@ -241,8 +293,8 @@ main() {
         echo "🔄 AUTO_START_WORKER enabled, worker will start after database is ready"
     fi
 
-    # Start supervisor in foreground
-    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    # Wait for supervisor process
+    wait $SUPERVISOR_PID
 }
 
 # Run main
