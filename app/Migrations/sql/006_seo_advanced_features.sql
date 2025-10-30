@@ -65,7 +65,9 @@ CREATE TABLE IF NOT EXISTS slugs_history (
 -- Technical documents
 CREATE TABLE IF NOT EXISTS product_documents (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  product_id INT NOT NULL,
+  product_id INT,
+
+  INDEX idx_product_id (product_id) NOT NULL,
 
   document_type ENUM('cad','technical-drawing','installation-guide','certificate','msds','tds','warranty','manual','other') NOT NULL,
   title VARCHAR(255) NOT NULL,
@@ -82,8 +84,6 @@ CREATE TABLE IF NOT EXISTS product_documents (
 
   display_order INT DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
 
   INDEX idx_product_id (product_id),
   INDEX idx_document_type (document_type),
@@ -110,11 +110,12 @@ CREATE TABLE IF NOT EXISTS product_colors (
 -- Product-Color options
 CREATE TABLE IF NOT EXISTS product_color_options (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  product_id INT NOT NULL,
+  product_id INT,
+
+  INDEX idx_product_id (product_id) NOT NULL,
   color_id INT NOT NULL,
 
   UNIQUE KEY uniq_product_color (product_id, color_id),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (color_id) REFERENCES product_colors(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -148,11 +149,12 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS project_products (
   id INT PRIMARY KEY AUTO_INCREMENT,
   project_id INT NOT NULL,
-  product_id INT NOT NULL,
+  product_id INT,
+
+  INDEX idx_product_id (product_id) NOT NULL,
   quantity_used INT DEFAULT NULL,
 
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
 
   INDEX idx_project_id (project_id),
   INDEX idx_product_id (product_id)
@@ -193,7 +195,9 @@ CREATE TABLE IF NOT EXISTS themes (
 CREATE TABLE IF NOT EXISTS subscriptions (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   user_id INT NOT NULL,
-  product_id INT DEFAULT NULL,
+  product_id INT,
+
+  INDEX idx_product_id (product_id) DEFAULT NULL,
 
   plan_interval ENUM('monthly','yearly') DEFAULT 'monthly',
   status ENUM('active','paused','canceled','expired') DEFAULT 'active',
