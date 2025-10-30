@@ -6,6 +6,20 @@
 use App\Http\Response;
 use App\Controllers\Api\ProductApiController;
 
+// API Base endpoint
+$router->get('/api', function() {
+    return Response::json([
+        'name' => 'E-Commerce API',
+        'version' => '1.0',
+        'endpoints' => [
+            'health' => '/api/v1/health',
+            'products' => '/api/v1/products',
+            'orders' => '/api/v1/orders',
+            'cart' => '/api/v1/cart'
+        ]
+    ]);
+});
+
 // API Health
 $router->get('/api/v1/health', function() {
     return Response::json(['status' => 'ok', 'version' => '1.0']);
