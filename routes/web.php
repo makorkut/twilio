@@ -359,3 +359,183 @@ $router->post('/admin/products/edit/{id}', function($id) {
         exit;
     }
 });
+
+// ============================================
+// Admin Categories Routes
+// ============================================
+
+// Categories List
+$router->get('/admin/categories', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/categories/list.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Category Create - Show Form
+$router->get('/admin/categories/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/categories/form.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Category Create - Handle Submission
+$router->post('/admin/categories/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $categoryService = new App\Services\CategoryService($db);
+
+        $data = [
+            'parent_id' => !empty($_POST['parent_id']) ? (int) $_POST['parent_id'] : null,
+            'name' => $_POST['name'] ?? '',
+            'slug' => generateSlug($_POST['name'] ?? ''),
+            'description' => $_POST['description'] ?? null,
+            'meta_title' => $_POST['meta_title'] ?? null,
+            'meta_description' => $_POST['meta_description'] ?? null,
+            'meta_keywords' => $_POST['meta_keywords'] ?? null,
+            'icon' => $_POST['icon'] ?? null,
+            'sort_order' => (int) ($_POST['sort_order'] ?? 0),
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+        ];
+
+        $categoryService->create($data);
+
+        $_SESSION['success_message'] = 'Kategori başarıyla oluşturuldu!';
+        header('Location: /admin/categories');
+        exit;
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/categories/create');
+        exit;
+    }
+});
+
+// Category Edit - Show Form
+$router->get('/admin/categories/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $categoryService = new App\Services\CategoryService($db);
+
+        $category = $categoryService->findById((int) $id);
+
+        if (!$category) {
+            $_SESSION['error_message'] = 'Kategori bulunamadı!';
+            header('Location: /admin/categories');
+            exit;
+        }
+
+        ob_start();
+        include APP_PATH . '/Views/admin/categories/form.php';
+        $html = ob_get_clean();
+
+        return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/categories');
+        exit;
+    }
+});
+
+// Category Edit - Handle Submission
+$router->post('/admin/categories/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $categoryService = new App\Services\CategoryService($db);
+
+        $data = [
+            'parent_id' => !empty($_POST['parent_id']) ? (int) $_POST['parent_id'] : null,
+            'name' => $_POST['name'] ?? '',
+            'slug' => generateSlug($_POST['name'] ?? ''),
+            'description' => $_POST['description'] ?? null,
+            'meta_title' => $_POST['meta_title'] ?? null,
+            'meta_description' => $_POST['meta_description'] ?? null,
+            'meta_keywords' => $_POST['meta_keywords'] ?? null,
+            'icon' => $_POST['icon'] ?? null,
+            'sort_order' => (int) ($_POST['sort_order'] ?? 0),
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'is_featured' => isset($_POST['is_featured']) ? 1 : 0,
+        ];
+
+        $categoryService->update((int) $id, $data);
+
+        $_SESSION['success_message'] = 'Kategori başarıyla güncellendi!';
+        header('Location: /admin/categories');
+        exit;
+
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        header('Location: /admin/categories/edit/' . $id);
+        exit;
+    }
+});
+
+// Category Delete
+$router->get('/admin/categories/delete/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $categoryService = new App\Services\CategoryService($db);
+
+        $categoryService->delete((int) $id);
+
+        $_SESSION['success_message'] = 'Kategori başarıyla silindi!';
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    header('Location: /admin/categories');
+    exit;
+});
