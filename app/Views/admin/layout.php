@@ -426,6 +426,10 @@ $currentPage = $currentPage ?? '';
             <!-- B2B -->
             <div class="nav-section">
                 <div class="nav-section-title">B2B</div>
+                <a href="/admin/samples" class="nav-item <?= $currentPage === 'samples' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">📦</span>
+                    <span>Numune Siparişleri</span>
+                </a>
                 <a href="/admin/customer-groups" class="nav-item <?= $currentPage === 'customer-groups' ? 'active' : '' ?>">
                     <span class="nav-item-icon">👔</span>
                     <span>Müşteri Grupları</span>

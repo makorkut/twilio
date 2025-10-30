@@ -769,3 +769,105 @@ $router->post('/admin/documents/{id}/delete', function($id) {
 
     redirect('/admin/documents');
 });
+
+// Admin Sample Orders
+$router->get('/admin/samples', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/samples/list.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/samples/{id}', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $sampleService = new App\Services\SampleOrderService($db);
+    $sample = $sampleService->getById((int)$id);
+
+    if (!$sample) {
+        $_SESSION['error_message'] = 'Numune talebi bulunamadı!';
+        redirect('/admin/samples');
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/samples/detail.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/samples/{id}/status', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $sampleService = new App\Services\SampleOrderService($db);
+
+        $status = $_POST['status'] ?? '';
+        $note = $_POST['note'] ?? null;
+        $trackingNumber = $_POST['tracking_number'] ?? null;
+
+        // Update tracking number if provided
+        if ($trackingNumber) {
+            $db->update('sample_orders', ['tracking_number' => $trackingNumber], ['id' => (int)$id]);
+            if (!$note) {
+                $note = "Kargo takip no: {$trackingNumber}";
+            }
+        }
+
+        if ($sampleService->updateStatus((int)$id, $status, $note)) {
+            $_SESSION['success_message'] = 'Durum başarıyla güncellendi!';
+        } else {
+            $_SESSION['error_message'] = 'Durum güncellenemedi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/samples/' . $id);
+});
+
+$router->post('/admin/samples/{id}/approve', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $sampleService = new App\Services\SampleOrderService($db);
+
+        if ($sampleService->approve((int)$id)) {
+            $_SESSION['success_message'] = 'Numune talebi onaylandı!';
+        } else {
+            $_SESSION['error_message'] = 'Numune talebi onaylanamadı!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/samples/' . $id);
+});
+
+$router->post('/admin/samples/{id}/reject', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $reason = $_POST['reason'] ?? 'Onaylanmadı';
+
+        $db = container()->get(App\Core\Database::class);
+        $sampleService = new App\Services\SampleOrderService($db);
+
+        if ($sampleService->reject((int)$id, $reason)) {
+            $_SESSION['success_message'] = 'Numune talebi reddedildi!';
+        } else {
+            $_SESSION['error_message'] = 'Numune talebi reddedilemedi!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/samples/' . $id);
+});
