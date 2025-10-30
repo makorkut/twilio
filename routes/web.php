@@ -42,6 +42,7 @@ $router->get('/', function() {
 
         <h2>Quick Links</h2>
         <ul>
+            <li><a href="/admin">🔐 Admin Panel</a></li>
             <li><a href="/healthz">Health Check</a></li>
             <li><a href="/api/v1/health">API Health Check</a></li>
         </ul>
@@ -74,4 +75,60 @@ $router->get('/{lang}/contact', function() {
 
 $router->get('/{lang}/projects', function() {
     return Response::html('frontend/projects');
+});
+
+// ============================================
+// Admin Panel Routes
+// ============================================
+
+// Admin Login Page
+$router->get('/admin/login', function() {
+    // If already logged in, redirect to dashboard
+    if (App\Core\Auth::check()) {
+        redirect('/admin');
+    }
+
+    // Show login form
+    $html = file_get_contents(PUBLIC_PATH . '/admin-login.php');
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Admin Login Handler
+$router->post('/admin/login', function() {
+    $email = $_POST['email'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    if (App\Core\Auth::attempt($email, $password)) {
+        redirect('/admin');
+    }
+
+    // Login failed - show error
+    ob_start();
+    $error = 'E-posta veya şifre hatalı!';
+    include PUBLIC_PATH . '/admin-login.php';
+    $html = ob_get_clean();
+
+    return new Response($html, 401, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Admin Logout
+$router->get('/admin/logout', function() {
+    App\Core\Auth::logout();
+    redirect('/admin/login');
+});
+
+// Admin Dashboard
+$router->get('/admin', function() {
+    // Check if logged in
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $user = App\Core\Auth::user();
+
+    $html = file_get_contents(PUBLIC_PATH . '/admin-dashboard.php');
+    $html = str_replace('{{USER_NAME}}', htmlspecialchars($user['name']), $html);
+    $html = str_replace('{{USER_EMAIL}}', htmlspecialchars($user['email']), $html);
+
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });

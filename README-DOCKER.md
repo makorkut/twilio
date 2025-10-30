@@ -46,16 +46,25 @@ docker-compose logs -f app
 ### 3. Access the Application
 
 - **Website**: http://localhost:3000
+- **Admin Panel**: http://localhost:3000/admin
 - **Health Check**: http://localhost:3000/healthz
 - **API Health**: http://localhost:3000/api/v1/health
 
 ### 4. Admin Login
+
+**Login URL**: http://localhost:3000/admin
 
 Default credentials (created automatically):
 - **Email**: `admin@polyes.tr`
 - **Password**: `Admin123!S3cur3`
 
 ⚠️ **IMPORTANT**: Change the admin password after first login!
+
+**What you can do in Admin Panel:**
+- View system status and statistics
+- Quick links to health checks
+- Logout functionality
+- (More features will be added as development continues)
 
 ## 🎨 Configuration
 

@@ -64,6 +64,9 @@ try {
     // Bootstrap application
     $app = new App\Core\Application();
 
+    // Make app globally accessible for helpers
+    $GLOBALS['app'] = $app;
+
     // Run application
     $app->run();
 

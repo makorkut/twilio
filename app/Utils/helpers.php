@@ -58,3 +58,35 @@ if (!function_exists('public_path')) {
         return PUBLIC_PATH . '/' . ltrim($file, '/');
     }
 }
+
+if (!function_exists('container')) {
+    function container(): ?\App\Core\Container
+    {
+        global $app;
+        return $app ? $app->getContainer() : null;
+    }
+}
+
+if (!function_exists('redirect')) {
+    function redirect(string $url, int $code = 302): void
+    {
+        header("Location: {$url}", true, $code);
+        exit;
+    }
+}
+
+if (!function_exists('view')) {
+    function view(string $file, array $data = []): string
+    {
+        $viewPath = APP_PATH . '/Views/' . $file;
+
+        if (!file_exists($viewPath)) {
+            throw new \Exception("View not found: {$file}");
+        }
+
+        extract($data);
+        ob_start();
+        include $viewPath;
+        return ob_get_clean();
+    }
+}
