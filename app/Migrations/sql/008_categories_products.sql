@@ -3,6 +3,7 @@
 -- ============================================
 
 -- Drop tables if they exist (for clean re-run after errors)
+SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS product_custom_fields;
 DROP TABLE IF EXISTS product_variants;
 DROP TABLE IF EXISTS product_categories;
@@ -10,6 +11,7 @@ DROP TABLE IF EXISTS product_translations;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS category_translations;
 DROP TABLE IF EXISTS categories;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Categories (Hierarchical)
 CREATE TABLE IF NOT EXISTS categories (
