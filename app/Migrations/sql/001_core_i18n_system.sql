@@ -2,14 +2,30 @@
 -- Migration 001: Core i18n System
 -- ============================================
 
--- Languages table (mevcut tablonuz var, sadece eksikleri ekleyelim)
-ALTER TABLE languages
-ADD COLUMN IF NOT EXISTS `is_default` TINYINT(1) DEFAULT 0 AFTER `status`,
-ADD COLUMN IF NOT EXISTS `locale_code` VARCHAR(10) DEFAULT NULL AFTER `language_code`,
-ADD COLUMN IF NOT EXISTS `date_format` VARCHAR(50) DEFAULT 'd/m/Y' AFTER `text_editor_lang`,
-ADD COLUMN IF NOT EXISTS `time_format` VARCHAR(20) DEFAULT 'H:i' AFTER `date_format`,
-ADD COLUMN IF NOT EXISTS `decimal_separator` CHAR(1) DEFAULT ',' AFTER `time_format`,
-ADD COLUMN IF NOT EXISTS `thousands_separator` CHAR(1) DEFAULT '.' AFTER `decimal_separator`;
+-- Languages table
+CREATE TABLE IF NOT EXISTS languages (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  language_code VARCHAR(5) NOT NULL UNIQUE,
+  locale_code VARCHAR(10) DEFAULT NULL,
+  text_editor_lang VARCHAR(50) DEFAULT NULL,
+  status TINYINT(1) DEFAULT 1,
+  is_default TINYINT(1) DEFAULT 0,
+  date_format VARCHAR(50) DEFAULT 'd/m/Y',
+  time_format VARCHAR(20) DEFAULT 'H:i',
+  decimal_separator CHAR(1) DEFAULT ',',
+  thousands_separator CHAR(1) DEFAULT '.',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_language_code (language_code),
+  INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default languages if not exists
+INSERT IGNORE INTO languages (name, language_code, locale_code, text_editor_lang, status, is_default) VALUES
+('Türkçe', 'tr', 'tr_TR', 'tr', 1, 1),
+('English', 'en', 'en_US', 'en', 1, 0);
 
 -- Ensure only one default language
 CREATE TRIGGER IF NOT EXISTS ensure_one_default_language

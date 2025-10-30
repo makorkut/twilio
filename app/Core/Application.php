@@ -66,6 +66,9 @@ class Application
      */
     protected function loadRoutes(): void
     {
+        // Make router available to route files
+        $router = $this->router;
+
         // Web routes
         require BASE_PATH . '/routes/web.php';
 
