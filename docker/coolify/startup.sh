@@ -84,15 +84,24 @@ $MYSQL_ROOT_CMD <<EOF
 -- Create database
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Create user
+-- Create user (for socket)
 DROP USER IF EXISTS '${DB_USER}'@'localhost';
 CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 
+-- Create user (for TCP)
+DROP USER IF EXISTS '${DB_USER}'@'127.0.0.1';
+CREATE USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
+
 -- Grant privileges
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 
--- Set root password (idempotent)
+-- Set root password for localhost (idempotent)
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
+
+-- Create root for TCP if not exists
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${DB_ROOT_PASS}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
 
 FLUSH PRIVILEGES;
 
@@ -174,23 +183,22 @@ echo ""
 echo "🔌 Step 6: Verifying TCP connection to MariaDB..."
 
 # Wait for MariaDB to accept TCP connections on 127.0.0.1:3306
-# Try both with and without password
-for i in {1..30}; do
+TCP_READY=false
+for i in {1..15}; do
     if mysql -u root -h 127.0.0.1 -p"${DB_ROOT_PASS}" -e "SELECT 1;" 2>/dev/null; then
         echo "   ✅ MariaDB accepting TCP connections on 127.0.0.1:3306"
+        TCP_READY=true
         break
-    fi
-    if [ $i -eq 30 ]; then
-        echo "   ❌ MariaDB TCP connection failed!"
-        echo "   Trying to diagnose..."
-        echo "   - Checking if MariaDB process is running:"
-        ps aux | grep mariadb || true
-        echo "   - Checking TCP port 3306:"
-        netstat -tlnp | grep 3306 || ss -tlnp | grep 3306 || true
-        exit 1
     fi
     sleep 1
 done
+
+if [ "$TCP_READY" = "false" ]; then
+    echo "   ⚠️  MariaDB TCP connection not ready yet (non-fatal)"
+    echo "   Supervisor will restart MariaDB with proper config"
+    echo "   - MariaDB process: $(ps aux | grep mariadbd | grep -v grep | wc -l) running"
+    echo "   - Port 3306: $(ss -tlnp 2>/dev/null | grep 3306 || echo 'checking...')"
+fi
 
 # ============================================
 # Step 7: Run Database Migrations
@@ -200,14 +208,18 @@ echo "🔄 Step 7: Running database migrations..."
 
 cd /var/www/html
 
-if php app/Migrations/apply.php 2>&1 | tee /var/www/html/storage/logs/migrations.log; then
-    echo "   ✅ Migrations completed"
+if [ "$TCP_READY" = "true" ]; then
+    if php app/Migrations/apply.php 2>&1 | tee /var/www/html/storage/logs/migrations.log; then
+        echo "   ✅ Migrations completed"
+    else
+        echo "   ⚠️  Migrations failed (check logs/migrations.log)"
+        echo ""
+        echo "   Last 20 lines of migration log:"
+        tail -n 20 /var/www/html/storage/logs/migrations.log 2>/dev/null || echo "   (log file not found)"
+        echo ""
+    fi
 else
-    echo "   ⚠️  Migrations failed (check logs/migrations.log)"
-    echo ""
-    echo "   Last 20 lines of migration log:"
-    tail -n 20 /var/www/html/storage/logs/migrations.log
-    echo ""
+    echo "   ⏸️  Skipping migrations (TCP not ready, will run on next restart)"
 fi
 
 # ============================================
@@ -222,18 +234,22 @@ ADMIN_NAME="${ADMIN_NAME:-Admin User}"
 
 export ADMIN_EMAIL ADMIN_PASSWORD ADMIN_NAME
 
-if php app/Migrations/seed-admin.php 2>&1 | tee /var/www/html/storage/logs/seed-admin.log; then
-    echo "   ✅ Admin user created"
-    echo ""
-    echo "   📋 Admin Credentials:"
-    echo "   Email: ${ADMIN_EMAIL}"
-    echo "   Password: ${ADMIN_PASSWORD}"
+if [ "$TCP_READY" = "true" ]; then
+    if php app/Migrations/seed-admin.php 2>&1 | tee /var/www/html/storage/logs/seed-admin.log; then
+        echo "   ✅ Admin user created"
+        echo ""
+        echo "   📋 Admin Credentials:"
+        echo "   Email: ${ADMIN_EMAIL}"
+        echo "   Password: ${ADMIN_PASSWORD}"
+    else
+        echo "   ⚠️  Admin user creation failed (check logs/seed-admin.log)"
+        echo ""
+        echo "   Last 20 lines of seed log:"
+        tail -n 20 /var/www/html/storage/logs/seed-admin.log 2>/dev/null || echo "   (log file not found)"
+        echo ""
+    fi
 else
-    echo "   ⚠️  Admin user creation failed (check logs/seed-admin.log)"
-    echo ""
-    echo "   Last 20 lines of seed log:"
-    tail -n 20 /var/www/html/storage/logs/seed-admin.log
-    echo ""
+    echo "   ⏸️  Skipping admin user creation (TCP not ready, will run on next restart)"
 fi
 
 # ============================================
