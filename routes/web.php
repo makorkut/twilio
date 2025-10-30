@@ -539,3 +539,45 @@ $router->get('/admin/categories/delete/{id}', function($id) {
     header('Location: /admin/categories');
     exit;
 });
+
+// ============================================
+// Admin Orders Routes
+// ============================================
+
+$router->get('/admin/orders', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    ob_start();
+    include APP_PATH . '/Views/admin/orders/list.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/orders/{id}', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $orderService = new App\Services\OrderService($db);
+    $order = $orderService->findById((int) $id);
+
+    if (!$order) {
+        $_SESSION['error_message'] = 'Sipariş bulunamadı!';
+        redirect('/admin/orders');
+    }
+
+    ob_start();
+    include APP_PATH . '/Views/admin/orders/detail.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/orders/{id}/status', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    $db = container()->get(App\Core\Database::class);
+    $orderService = new App\Services\OrderService($db);
+    $orderService->updateStatus((int) $id, $_POST['status'] ?? '', $_POST['note'] ?? null);
+
+    $_SESSION['success_message'] = 'Sipariş durumu güncellendi!';
+    redirect('/admin/orders/' . $id);
+});
