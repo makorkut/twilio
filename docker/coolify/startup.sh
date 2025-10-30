@@ -101,9 +101,9 @@ APP_DEBUG=${APP_DEBUG:-true}
 APP_URL=${APP_URL:-http://localhost}
 APP_TIMEZONE=Europe/Istanbul
 
-# Database (MariaDB on localhost)
+# Database (MariaDB via TCP, not socket)
 DB_CONNECTION=mysql
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=${DB_NAME}
 DB_USERNAME=${DB_USER}
@@ -145,10 +145,29 @@ chmod -R 755 /var/www/html/storage /var/www/html/public/uploads 2>/dev/null || t
 echo "   ✅ Permissions set"
 
 # ============================================
-# Step 6: Run Database Migrations
+# Step 6: Verify TCP Connection Ready
 # ============================================
 echo ""
-echo "🔄 Step 6: Running database migrations..."
+echo "🔌 Step 6: Verifying TCP connection to MariaDB..."
+
+# Wait for MariaDB to accept TCP connections on 127.0.0.1:3306
+for i in {1..30}; do
+    if mysql -u root -h 127.0.0.1 -e "SELECT 1;" 2>/dev/null; then
+        echo "   ✅ MariaDB accepting TCP connections on 127.0.0.1:3306"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo "   ❌ MariaDB TCP connection failed!"
+        exit 1
+    fi
+    sleep 1
+done
+
+# ============================================
+# Step 7: Run Database Migrations
+# ============================================
+echo ""
+echo "🔄 Step 7: Running database migrations..."
 
 cd /var/www/html
 
@@ -163,10 +182,10 @@ else
 fi
 
 # ============================================
-# Step 7: Create Admin User
+# Step 8: Create Admin User
 # ============================================
 echo ""
-echo "👤 Step 7: Creating admin user..."
+echo "👤 Step 8: Creating admin user..."
 
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@polyes.tr}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin123!S3cur3}"
@@ -189,10 +208,10 @@ else
 fi
 
 # ============================================
-# Step 8: Stop MariaDB (Supervisor will manage it)
+# Step 9: Stop MariaDB (Supervisor will manage it)
 # ============================================
 echo ""
-echo "⏸️  Step 8: Stopping MariaDB (Supervisor will restart)..."
+echo "⏸️  Step 9: Stopping MariaDB (Supervisor will restart)..."
 
 mysqladmin -u root -p"${DB_ROOT_PASS}" shutdown 2>/dev/null || killall mysqld 2>/dev/null || true
 sleep 2
@@ -200,10 +219,10 @@ sleep 2
 echo "   ✅ MariaDB stopped"
 
 # ============================================
-# Step 9: Start Supervisor (manages all services)
+# Step 10: Start Supervisor (manages all services)
 # ============================================
 echo ""
-echo "🎯 Step 9: Starting Supervisor..."
+echo "🎯 Step 10: Starting Supervisor..."
 echo ""
 echo "================================================"
 echo "✅ DATABASE SETUP COMPLETED!"
@@ -232,10 +251,12 @@ echo "================================================"
 echo ""
 
 # Enable worker if requested
-if [ "${AUTO_START_WORKER:-true}" = "true" ]; then
+if [ "${AUTO_START_WORKER:-false}" = "true" ]; then
     echo "⚙️  Worker will be started via Supervisor..."
     # Update supervisor config to autostart worker
     sed -i '/\[program:worker\]/,/user=www-data/ s/autostart=false/autostart=true/' /etc/supervisor/conf.d/services.conf
+else
+    echo "⏸️  Worker disabled by default (set AUTO_START_WORKER=true to enable)"
 fi
 
 # Start Supervisor (this will start MariaDB, PHP-FPM, Nginx, and optionally Worker)

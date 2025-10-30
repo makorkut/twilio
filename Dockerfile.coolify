@@ -99,6 +99,16 @@ RUN mkdir -p \
     && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
     && chmod 755 /var/run/mysqld
 
+# MariaDB Configuration (enable TCP connections)
+RUN { \
+    echo '[mysqld]'; \
+    echo 'bind-address = 0.0.0.0'; \
+    echo 'port = 3306'; \
+    echo 'skip-name-resolve'; \
+    echo 'max_connections = 100'; \
+    echo 'innodb_buffer_pool_size = 128M'; \
+} > /etc/mysql/mariadb.conf.d/99-custom.cnf
+
 # PHP Production Configuration
 RUN { \
     echo '[PHP]'; \
