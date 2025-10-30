@@ -134,14 +134,27 @@ CREATE TABLE IF NOT EXISTS tax_rates (
   FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Note: FK to products moved to migration 008
+-- ============================================
+-- Add Foreign Keys to products (created in migration 008)
+-- ============================================
 
--- Seed: Customer Groups
-INSERT IGNORE INTO customer_groups (id, name, code, default_discount_percent, credit_limit_enabled, default_credit_limit, payment_terms_days, sort_order) VALUES
-(1, 'Bireysel Müşteri', 'retail', 0, 0, 0, 0, 1),
-(2, 'Kurumsal Müşteri', 'corporate', 5, 1, 50000, 30, 2),
-(3, 'Bayi / Distribütör', 'distributor', 15, 1, 150000, 60, 3),
-(4, 'VIP Müşteri', 'vip', 10, 1, 100000, 45, 4);
+-- product_tier_prices -> products
+SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='fk_product_tier_prices_product' AND TABLE_SCHEMA = DATABASE());
+SET @sql = IF(@fk_check = 0, 'ALTER TABLE product_tier_prices ADD CONSTRAINT fk_product_tier_prices_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE', 'SELECT "FK already exists"');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- product_currency_prices -> products
+SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='fk_product_currency_prices_product' AND TABLE_SCHEMA = DATABASE());
+SET @sql = IF(@fk_check = 0, 'ALTER TABLE product_currency_prices ADD CONSTRAINT fk_product_currency_prices_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE', 'SELECT "FK already exists"');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- NOTE: Customer Groups seed data already exists in migration 004
+-- Updating only if using new column names
+
+-- Update customer groups with new columns (if they exist)
+UPDATE customer_groups SET code = slug WHERE code IS NULL OR code = '';
+UPDATE customer_groups SET default_discount_percent = discount_percent WHERE default_discount_percent IS NULL;
+UPDATE customer_groups SET default_credit_limit = credit_limit WHERE default_credit_limit IS NULL;
 
 -- Seed: Tax Classes
 INSERT IGNORE INTO tax_classes (id, name, code, default_rate) VALUES
