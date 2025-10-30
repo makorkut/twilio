@@ -201,7 +201,7 @@ if [ "$TCP_READY" = "false" ]; then
 fi
 
 # ============================================
-# Step 7: Run Database Migrations
+# Step 7: Run Database Migrations (with auto-fix)
 # ============================================
 echo ""
 echo "🔄 Step 7: Running database migrations..."
@@ -209,14 +209,33 @@ echo "🔄 Step 7: Running database migrations..."
 cd /var/www/html
 
 if [ "$TCP_READY" = "true" ]; then
+    # Try migrations first time
     if php app/Migrations/apply.php 2>&1 | tee /var/www/html/storage/logs/migrations.log; then
         echo "   ✅ Migrations completed"
     else
-        echo "   ⚠️  Migrations failed (check logs/migrations.log)"
-        echo ""
-        echo "   Last 20 lines of migration log:"
-        tail -n 20 /var/www/html/storage/logs/migrations.log 2>/dev/null || echo "   (log file not found)"
-        echo ""
+        echo "   ⚠️  First migration attempt failed"
+        echo "   🔧 Auto-fixing: Dropping migrations table and retrying..."
+
+        # Drop migrations table and problematic tables
+        mysql -h 127.0.0.1 -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" <<'SQLEOF'
+DROP TABLE IF EXISTS migrations;
+DROP TABLE IF EXISTS product_prices_currency;
+DROP TABLE IF EXISTS exchange_rates;
+DROP TABLE IF EXISTS tax_classes;
+SQLEOF
+
+        echo "   🔄 Retrying migrations from scratch..."
+
+        # Retry migrations
+        if php app/Migrations/apply.php 2>&1 | tee -a /var/www/html/storage/logs/migrations.log; then
+            echo "   ✅ Migrations completed after retry!"
+        else
+            echo "   ❌ Migrations failed after retry (check logs/migrations.log)"
+            echo ""
+            echo "   Last 30 lines of migration log:"
+            tail -n 30 /var/www/html/storage/logs/migrations.log 2>/dev/null || echo "   (log file not found)"
+            echo ""
+        fi
     fi
 else
     echo "   ⏸️  Skipping migrations (TCP not ready, will run on next restart)"

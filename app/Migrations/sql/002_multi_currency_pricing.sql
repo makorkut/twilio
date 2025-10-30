@@ -35,11 +35,10 @@ CREATE TABLE IF NOT EXISTS product_prices_currency (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   UNIQUE KEY uniq_product_currency (product_id, currency_code),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-
+  INDEX idx_product_id (product_id),
   INDEX idx_currency_code (currency_code),
   INDEX idx_updated_at (updated_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Foreign key to products will be added in migration 008';
 
 -- Exchange rates history
 CREATE TABLE IF NOT EXISTS exchange_rates (
@@ -66,31 +65,10 @@ CREATE TABLE IF NOT EXISTS tax_classes (
   INDEX idx_is_default (is_default)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Extend products table
-ALTER TABLE products
-ADD COLUMN IF NOT EXISTS `vat_class_id` INT DEFAULT NULL AFTER `vat_rate`,
-ADD COLUMN IF NOT EXISTS `price_visibility` ENUM('visible','hidden','login_required') DEFAULT 'visible' AFTER `vat_class_id`,
-ADD COLUMN IF NOT EXISTS `compare_at_price` BIGINT DEFAULT NULL AFTER `price`,
-ADD COLUMN IF NOT EXISTS `cost_price` BIGINT DEFAULT NULL AFTER `compare_at_price`,
-ADD COLUMN IF NOT EXISTS `selling_unit` ENUM('piece','meter','m2','package') DEFAULT 'piece' AFTER `stock`,
-ADD COLUMN IF NOT EXISTS `package_quantity` INT DEFAULT 1 AFTER `selling_unit`,
-ADD COLUMN IF NOT EXISTS `length_mm` DECIMAL(10,2) DEFAULT NULL AFTER `package_quantity`,
-ADD COLUMN IF NOT EXISTS `width_mm` DECIMAL(10,2) DEFAULT NULL AFTER `length_mm`,
-ADD COLUMN IF NOT EXISTS `height_mm` DECIMAL(10,2) DEFAULT NULL AFTER `width_mm`,
-ADD COLUMN IF NOT EXISTS `weight_kg` DECIMAL(10,3) DEFAULT NULL AFTER `height_mm`;
-
--- Add foreign key if not exists
-SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-                 WHERE CONSTRAINT_NAME='fk_products_vat_class'
-                 AND TABLE_NAME='products');
-
-SET @sql = IF(@fk_check = 0,
-  'ALTER TABLE products ADD CONSTRAINT fk_products_vat_class FOREIGN KEY (vat_class_id) REFERENCES tax_classes(id) ON DELETE SET NULL',
-  'SELECT "FK already exists"');
-
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- NOTE: Products table extension moved to 008_categories_products.sql
+-- These columns will be added when products table is created:
+-- vat_class_id, price_visibility, compare_at_price, cost_price,
+-- selling_unit, package_quantity, length_mm, width_mm, height_mm, weight_kg
 
 -- Seed default tax classes
 INSERT INTO tax_classes (name, rate_percent, is_default) VALUES

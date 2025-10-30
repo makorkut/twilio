@@ -223,31 +223,5 @@ CREATE TABLE IF NOT EXISTS media_gallery_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- AUTO ATTACH TRIGGER: SKU tag → Product
-DELIMITER $$
-CREATE TRIGGER IF NOT EXISTS auto_attach_media_to_product_by_sku
-AFTER INSERT ON media_tag_relations
-FOR EACH ROW
-BEGIN
-  DECLARE product_sku VARCHAR(255);
-  DECLARE product_found INT;
-
-  -- Check if tag is SKU type
-  SELECT name INTO product_sku
-  FROM media_tags
-  WHERE id = NEW.tag_id AND tag_type = 'sku';
-
-  IF product_sku IS NOT NULL THEN
-    -- Find product by SKU
-    SELECT id INTO product_found
-    FROM products
-    WHERE sku = product_sku OR skud = product_sku
-    LIMIT 1;
-
-    IF product_found IS NOT NULL THEN
-      -- Auto-attach media to product
-      INSERT IGNORE INTO media_usage (media_id, entity_type, entity_id, usage_type)
-      VALUES (NEW.media_id, 'product', product_found, 'gallery');
-    END IF;
-  END IF;
-END$$
-DELIMITER ;
+-- Note: Trigger will be created after products table exists (migration 008)
+-- Uncomment after migration 008 is complete

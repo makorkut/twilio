@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS products (
   base_price DECIMAL(18,4) NOT NULL DEFAULT 0,
   compare_price DECIMAL(18,4) DEFAULT NULL COMMENT 'Original price (for discount display)',
   cost_price DECIMAL(18,4) DEFAULT NULL COMMENT 'Your cost (for margin calc)',
+  price_visibility ENUM('visible','hidden','login_required') DEFAULT 'visible',
 
   -- Tax
   tax_class_id INT DEFAULT NULL,
@@ -232,3 +233,101 @@ INSERT IGNORE INTO products (id, sku, name, slug, short_description, base_price,
 -- Link product to category
 INSERT IGNORE INTO product_categories (product_id, category_id, is_primary) VALUES
 (1, 4, 1);
+
+-- ============================================
+-- Add Foreign Keys (delayed from migration 002)
+-- ============================================
+
+-- Add FK from products to tax_classes
+ALTER TABLE products
+ADD CONSTRAINT fk_products_tax_class
+FOREIGN KEY (tax_class_id) REFERENCES tax_classes(id) ON DELETE SET NULL;
+
+-- Add FK from product_prices_currency to products
+ALTER TABLE product_prices_currency
+ADD CONSTRAINT fk_product_prices_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- ============================================
+-- Add Triggers (delayed from migration 003)
+-- ============================================
+
+-- AUTO ATTACH TRIGGER: SKU tag → Product
+-- When a media is tagged with SKU, auto-attach to matching product
+DROP TRIGGER IF EXISTS auto_attach_media_to_product_by_sku;
+
+CREATE TRIGGER auto_attach_media_to_product_by_sku
+AFTER INSERT ON media_tag_relations
+FOR EACH ROW
+BEGIN
+  DECLARE product_sku VARCHAR(255);
+  DECLARE product_found INT;
+
+  -- Check if tag is SKU type
+  SELECT name INTO product_sku
+  FROM media_tags
+  WHERE id = NEW.tag_id AND tag_type = 'sku';
+
+  IF product_sku IS NOT NULL THEN
+    -- Find product by SKU
+    SELECT id INTO product_found
+    FROM products
+    WHERE sku = product_sku
+    LIMIT 1;
+
+    IF product_found IS NOT NULL THEN
+      -- Auto-attach media to product
+      INSERT IGNORE INTO media_usage (media_id, entity_type, entity_id, usage_type)
+      VALUES (NEW.media_id, 'product', product_found, 'gallery');
+    END IF;
+  END IF;
+END;
+
+-- ============================================
+-- Add Foreign Keys from earlier migrations
+-- ============================================
+
+-- From migration 004: customer_group_prices -> products
+ALTER TABLE customer_group_prices
+ADD CONSTRAINT fk_customer_group_prices_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 004: sample_order_items -> products
+ALTER TABLE sample_order_items
+ADD CONSTRAINT fk_sample_order_items_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 006: product_reviews -> products
+ALTER TABLE product_reviews
+ADD CONSTRAINT fk_product_reviews_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 006: product_questions -> products
+ALTER TABLE product_questions
+ADD CONSTRAINT fk_product_questions_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 006: product_comparisons -> products
+ALTER TABLE product_comparisons
+ADD CONSTRAINT fk_product_comparisons_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 007: wishlists -> products
+ALTER TABLE wishlists
+ADD CONSTRAINT fk_wishlists_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 007: product_views -> products
+ALTER TABLE product_views
+ADD CONSTRAINT fk_product_views_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+
+-- From migration 007: search_logs -> products (nullable)
+ALTER TABLE search_logs
+ADD CONSTRAINT fk_search_logs_product
+FOREIGN KEY (clicked_product_id) REFERENCES products(id) ON DELETE SET NULL;
+
+-- From migration 007: fraud_checks -> products (nullable)
+ALTER TABLE fraud_checks
+ADD CONSTRAINT fk_fraud_checks_product
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;

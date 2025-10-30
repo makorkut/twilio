@@ -20,18 +20,18 @@ CREATE TABLE IF NOT EXISTS customer_groups (
 
 -- Extend users table for B2B
 ALTER TABLE users
-ADD COLUMN IF NOT EXISTS `customer_group_id` INT DEFAULT NULL AFTER `role`,
-ADD COLUMN IF NOT EXISTS `company_name` VARCHAR(255) DEFAULT NULL AFTER `last_name`,
-ADD COLUMN IF NOT EXISTS `tax_number` VARCHAR(50) DEFAULT NULL AFTER `company_name`,
-ADD COLUMN IF NOT EXISTS `tax_office` VARCHAR(255) DEFAULT NULL AFTER `tax_number`,
-ADD COLUMN IF NOT EXISTS `credit_limit` BIGINT DEFAULT 0 AFTER `tax_office`,
-ADD COLUMN IF NOT EXISTS `credit_used` BIGINT DEFAULT 0 AFTER `credit_limit`,
-ADD COLUMN IF NOT EXISTS `payment_term_days` INT DEFAULT 0 AFTER `credit_used`,
-ADD COLUMN IF NOT EXISTS `is_verified_business` TINYINT(1) DEFAULT 0 AFTER `payment_term_days`,
-ADD COLUMN IF NOT EXISTS `business_documents` VARCHAR(1000) DEFAULT NULL AFTER `is_verified_business` COMMENT 'JSON array of document paths',
-ADD COLUMN IF NOT EXISTS `rfm_score` INT DEFAULT 0 AFTER `business_documents` COMMENT 'RFM analysis score',
-ADD COLUMN IF NOT EXISTS `clv` BIGINT DEFAULT 0 AFTER `rfm_score` COMMENT 'Customer Lifetime Value',
-ADD COLUMN IF NOT EXISTS `totp_secret` VARCHAR(255) DEFAULT NULL AFTER `clv` COMMENT '2FA secret';
+ADD COLUMN IF NOT EXISTS customer_group_id INT DEFAULT NULL COMMENT 'Customer group ID',
+ADD COLUMN IF NOT EXISTS company_name VARCHAR(255) DEFAULT NULL COMMENT 'Company name for B2B',
+ADD COLUMN IF NOT EXISTS tax_number VARCHAR(50) DEFAULT NULL COMMENT 'Tax ID number',
+ADD COLUMN IF NOT EXISTS tax_office VARCHAR(255) DEFAULT NULL COMMENT 'Tax office name',
+ADD COLUMN IF NOT EXISTS credit_limit BIGINT DEFAULT 0 COMMENT 'Credit limit amount',
+ADD COLUMN IF NOT EXISTS credit_used BIGINT DEFAULT 0 COMMENT 'Used credit amount',
+ADD COLUMN IF NOT EXISTS payment_term_days INT DEFAULT 0 COMMENT 'Payment terms in days',
+ADD COLUMN IF NOT EXISTS is_verified_business TINYINT(1) DEFAULT 0 COMMENT 'Business verification status',
+ADD COLUMN IF NOT EXISTS business_documents TEXT DEFAULT NULL COMMENT 'JSON array of document paths',
+ADD COLUMN IF NOT EXISTS rfm_score INT DEFAULT 0 COMMENT 'RFM analysis score',
+ADD COLUMN IF NOT EXISTS clv BIGINT DEFAULT 0 COMMENT 'Customer lifetime value',
+ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(255) DEFAULT NULL COMMENT '2FA TOTP secret';
 
 -- Add FK for customer group
 SET @fk_check = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
@@ -55,9 +55,9 @@ CREATE TABLE IF NOT EXISTS customer_group_prices (
   price DECIMAL(18,4) NOT NULL,
 
   UNIQUE KEY uniq_product_group_currency (product_id, customer_group_id, currency_code),
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_product_id (product_id),
   FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='FK to products will be added in migration 008';
 
 -- Sample orders (numune)
 CREATE TABLE IF NOT EXISTS sample_orders (
@@ -84,9 +84,9 @@ CREATE TABLE IF NOT EXISTS sample_order_items (
   product_id INT NOT NULL,
   quantity INT DEFAULT 1,
 
-  FOREIGN KEY (sample_order_id) REFERENCES sample_orders(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  INDEX idx_product_id (product_id),
+  FOREIGN KEY (sample_order_id) REFERENCES sample_orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='FK to products will be added in migration 008';
 
 -- Dealer applications
 CREATE TABLE IF NOT EXISTS dealer_applications (
