@@ -410,6 +410,19 @@ $currentPage = $currentPage ?? '';
                 </a>
             </div>
 
+            <!-- Content -->
+            <div class="nav-section">
+                <div class="nav-section-title">İçerik</div>
+                <a href="/admin/documents" class="nav-item <?= $currentPage === 'documents' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">📄</span>
+                    <span>Teknik Dokümanlar</span>
+                </a>
+                <a href="/admin/media" class="nav-item <?= $currentPage === 'media' ? 'active' : '' ?>">
+                    <span class="nav-item-icon">🖼️</span>
+                    <span>Medya Kütüphanesi</span>
+                </a>
+            </div>
+
             <!-- B2B -->
             <div class="nav-section">
                 <div class="nav-section-title">B2B</div>

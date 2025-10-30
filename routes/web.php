@@ -697,3 +697,75 @@ $router->post('/admin/media/upload', function() {
 
     redirect('/admin/media');
 });
+
+// Admin Technical Documents
+$router->get('/admin/documents', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/documents/list.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/admin/documents/upload', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    ob_start();
+    include APP_PATH . '/Views/admin/documents/upload.php';
+    return new Response(ob_get_clean(), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->post('/admin/documents/upload', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        if (empty($_FILES['file'])) {
+            throw new \Exception('Dosya seçilmedi');
+        }
+
+        $db = container()->get(App\Core\Database::class);
+        $documentService = new App\Services\TechnicalDocumentService($db);
+
+        $productId = (int)$_POST['product_id'];
+        $documentType = $_POST['document_type'] ?? '';
+
+        $metadata = [
+            'title' => $_POST['title'] ?? '',
+            'description' => $_POST['description'] ?? null,
+            'version' => $_POST['version'] ?? '1.0',
+            'language' => $_POST['language'] ?? 'tr',
+            'is_public' => isset($_POST['is_public']) ? 1 : 0,
+        ];
+
+        $documentId = $documentService->upload($productId, $_FILES['file'], $documentType, $metadata);
+
+        $_SESSION['success_message'] = 'Doküman başarıyla yüklendi!';
+        redirect('/admin/documents');
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        redirect('/admin/documents/upload');
+    }
+});
+
+$router->post('/admin/documents/{id}/delete', function($id) {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $documentService = new App\Services\TechnicalDocumentService($db);
+
+        if ($documentService->delete((int)$id)) {
+            $_SESSION['success_message'] = 'Doküman başarıyla silindi!';
+        } else {
+            $_SESSION['error_message'] = 'Doküman bulunamadı!';
+        }
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+    }
+
+    redirect('/admin/documents');
+});
