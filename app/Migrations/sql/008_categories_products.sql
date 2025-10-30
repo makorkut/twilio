@@ -307,25 +307,8 @@ ALTER TABLE sample_order_items
 ADD CONSTRAINT fk_sample_order_items_product
 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
 
--- From migration 006: product_reviews -> products
-ALTER TABLE product_reviews
-ADD CONSTRAINT fk_product_reviews_product
-FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
-
--- From migration 006: product_questions -> products
-ALTER TABLE product_questions
-ADD CONSTRAINT fk_product_questions_product
-FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
-
--- From migration 006: product_comparisons -> products
-ALTER TABLE product_comparisons
-ADD CONSTRAINT fk_product_comparisons_product
-FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
-
--- From migration 007: wishlists -> products
-ALTER TABLE wishlists
-ADD CONSTRAINT fk_wishlists_product
-FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
+-- NOTE: Tables product_reviews, product_questions, product_comparisons, wishlists don't exist
+-- These tables were never created in earlier migrations, removing FK constraints
 
 -- From migration 007: product_views -> products
 ALTER TABLE product_views
@@ -336,11 +319,6 @@ FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE;
 ALTER TABLE search_logs
 ADD CONSTRAINT fk_search_logs_product
 FOREIGN KEY (clicked_product_id) REFERENCES products(id) ON DELETE SET NULL;
-
--- From migration 007: fraud_checks -> products (nullable)
-ALTER TABLE fraud_checks
-ADD CONSTRAINT fk_fraud_checks_product
-FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
 
 -- From migration 004: product_relations -> products (both directions)
 ALTER TABLE product_relations
