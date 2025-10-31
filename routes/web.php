@@ -1225,3 +1225,131 @@ $router->get('/admin/api/settings/statistics', function() {
 
     return $controller->statistics($request);
 });
+
+// ============================================
+// Missing Frontend Routes
+// ============================================
+
+// Search Page
+$router->get('/search', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/search.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Account Page
+$router->get('/account', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/account.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Categories Page
+$router->get('/categories', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/categories.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// ============================================
+// Admin Webhooks Routes
+// ============================================
+
+$router->get('/admin/webhooks', function() {
+    if (!App\Core\Auth::check()) redirect('/admin/login');
+    if (session_status() === PHP_SESSION_NONE) session_start();
+
+    try {
+        $db = container()->get(App\Core\Database::class);
+        $webhooks = $db->query("SELECT * FROM webhooks ORDER BY created_at DESC");
+
+        ob_start();
+        ?>
+        <!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Webhooks - Admin Panel</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+                .header { background: white; padding: 20px 40px; border-bottom: 1px solid #e0e0e0; }
+                .header h1 { font-size: 24px; font-weight: 500; }
+                .container { max-width: 1200px; margin: 40px auto; padding: 0 40px; }
+                .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+                table { width: 100%; border-collapse: collapse; }
+                th { text-align: left; padding: 16px 20px; background: #f8f8f8; font-weight: 600; font-size: 13px; text-transform: uppercase; color: #666; }
+                td { padding: 16px 20px; border-top: 1px solid #f0f0f0; }
+                .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+                .badge-success { background: #e8f5e9; color: #2e7d32; }
+                .badge-pending { background: #fff3e0; color: #e65100; }
+                .empty { text-align: center; padding: 60px 20px; color: #999; }
+                .nav { padding: 20px 40px; background: white; border-bottom: 1px solid #e0e0e0; }
+                .nav a { color: #666; text-decoration: none; margin-right: 20px; font-size: 14px; }
+            </style>
+        </head>
+        <body>
+            <nav class="nav">
+                <a href="/admin">Dashboard</a>
+                <a href="/admin/products">Ürünler</a>
+                <a href="/admin/categories">Kategoriler</a>
+                <a href="/admin/orders">Siparişler</a>
+                <a href="/admin/webhooks" style="color: #1a1a1a; font-weight: 600;">Webhooks</a>
+                <a href="/admin/settings">Ayarlar</a>
+                <a href="/admin/logout" style="float: right;">Çıkış</a>
+            </nav>
+
+            <div class="header">
+                <h1>Webhooks</h1>
+            </div>
+
+            <div class="container">
+                <div class="card">
+                    <?php if (count($webhooks) > 0): ?>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Event</th>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($webhooks as $webhook): ?>
+                                    <tr>
+                                        <td><?= $webhook['id'] ?></td>
+                                        <td><?= htmlspecialchars($webhook['event']) ?></td>
+                                        <td><code><?= htmlspecialchars($webhook['url']) ?></code></td>
+                                        <td>
+                                            <span class="badge badge-<?= $webhook['is_active'] ? 'success' : 'pending' ?>">
+                                                <?= $webhook['is_active'] ? 'Aktif' : 'Pasif' ?>
+                                            </span>
+                                        </td>
+                                        <td><?= date('d.m.Y H:i', strtotime($webhook['created_at'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php else: ?>
+                        <div class="empty">
+                            <p>Henüz webhook tanımlanmamış</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </body>
+        </html>
+        <?php
+        $html = ob_get_clean();
+        return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    } catch (\Exception $e) {
+        $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
+        redirect('/admin');
+    }
+});
