@@ -1,9 +1,18 @@
 <?php
 $pageTitle = 'Sepetim';
 
-$db = container()->get(App\Core\Database::class);
-$cartService = new App\Services\CartService($db);
-$cart = $cartService->getCart();
+// Safely get cart data
+$cart = [];
+try {
+    $db = container()->get(App\Core\Database::class);
+    if ($db) {
+        $cartService = new App\Services\CartService($db);
+        $cart = $cartService->getCart();
+    }
+} catch (\Exception $e) {
+    error_log("Cart error: " . $e->getMessage());
+    $cart = [];
+}
 
 ob_start();
 ?>

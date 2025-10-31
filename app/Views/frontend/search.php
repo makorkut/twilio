@@ -10,17 +10,21 @@ $results = [];
 if (!empty($searchQuery)) {
     try {
         $db = container()->get(App\Core\Database::class);
-        $results = $db->query(
-            "SELECT p.*, pl.name, pl.slug
-             FROM products p
-             LEFT JOIN product_lang pl ON pl.product_id = p.id AND pl.lang = 'tr'
-             WHERE pl.name LIKE ? OR p.sku LIKE ? OR pl.description LIKE ?
-             AND p.status = 'active'
-             LIMIT 50",
-            ["%{$searchQuery}%", "%{$searchQuery}%", "%{$searchQuery}%"]
-        );
+        if ($db) {
+            $queryResult = $db->query(
+                "SELECT p.*, pl.name, pl.slug
+                 FROM products p
+                 LEFT JOIN product_lang pl ON pl.product_id = p.id AND pl.lang = 'tr'
+                 WHERE (pl.name LIKE ? OR p.sku LIKE ? OR pl.description LIKE ?)
+                 AND p.status = 'active'
+                 LIMIT 50",
+                ["%{$searchQuery}%", "%{$searchQuery}%", "%{$searchQuery}%"]
+            );
+            $results = $queryResult ?? [];
+        }
     } catch (\Exception $e) {
         error_log("Search error: " . $e->getMessage());
+        $results = [];
     }
 }
 

@@ -71,17 +71,48 @@ $router->get('/health', function() {
 $router->get('/{lang}/kategori/{categorySlug}', [ProductFrontendController::class, 'category']);
 $router->get('/{lang}/{categorySlug}/{productSlug}', [ProductFrontendController::class, 'show']);
 
-// Static pages
+// Static pages (with language prefix)
 $router->get('/{lang}/about', function() {
-    return Response::html('frontend/about');
+    ob_start();
+    include APP_PATH . '/Views/frontend/about.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 
 $router->get('/{lang}/contact', function() {
-    return Response::html('frontend/contact');
+    ob_start();
+    include APP_PATH . '/Views/frontend/contact.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 
 $router->get('/{lang}/projects', function() {
-    return Response::html('frontend/projects');
+    ob_start();
+    include APP_PATH . '/Views/frontend/projects.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Static pages (without language prefix for backwards compatibility)
+$router->get('/about', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/about.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/contact', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/contact.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+$router->get('/projects', function() {
+    ob_start();
+    include APP_PATH . '/Views/frontend/projects.php';
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 
 // ============================================
@@ -1352,4 +1383,203 @@ $router->get('/admin/webhooks', function() {
         $_SESSION['error_message'] = 'Hata: ' . $e->getMessage();
         redirect('/admin');
     }
+});
+
+// ============================================
+// Footer Pages (Placeholder Pages)
+// ============================================
+
+// Careers
+$router->get('/careers', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Kariyer - Polyurethane</title>
+        <link rel="stylesheet" href="/assets/css/main.css">
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Kariyer Fırsatları</h1>
+        <p>Polyurethane ailesine katılmak ister misiniz? Açık pozisyonlarımız için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Shipping Info
+$router->get('/shipping', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Kargo & Teslimat - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Kargo & Teslimat</h1>
+        <p>500₺ ve üzeri siparişlerde ücretsiz kargo. Detaylı bilgi için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Returns & Exchange
+$router->get('/returns', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>İade & Değişim - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>İade & Değişim</h1>
+        <p>14 gün içinde iade ve değişim hakkı. Detaylı bilgi için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// FAQ
+$router->get('/faq', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sık Sorulan Sorular - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Sık Sorulan Sorular</h1>
+        <p>Sorularınız için <a href="/contact">iletişime</a> geçebilirsiniz.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Samples
+$router->get('/samples', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Numune Sipariş - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Numune Sipariş</h1>
+        <p>Ürün numunelerimizi sipariş etmek için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// B2B
+$router->get('/b2b', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bayi Başvurusu - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Bayi Başvurusu</h1>
+        <p>Bayilik başvurunuz için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Wholesale
+$router->get('/wholesale', function() {
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Toptan Fiyatlar - Polyurethane</title>
+        <style>
+            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #333; }
+            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
+        <h1>Toptan Fiyatlar</h1>
+        <p>Toptan fiyat bilgisi için <a href="/contact">iletişime</a> geçin.</p>
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+    return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+});
+
+// Catalog
+$router->get('/catalog', function() {
+    redirect('/admin/catalogs');
 });
