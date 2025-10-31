@@ -96,7 +96,10 @@ $router->get('/admin/login', function() {
     }
 
     // Show login form
-    $html = file_get_contents(PUBLIC_PATH . '/admin-login.php');
+    ob_start();
+    include PUBLIC_PATH . '/admin-login.php';
+    $html = ob_get_clean();
+
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
 
