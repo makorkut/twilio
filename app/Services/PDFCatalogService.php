@@ -12,10 +12,14 @@ class PDFCatalogService
     public function __construct(Database $db)
     {
         $this->db = $db;
-        $this->catalogsPath = $_ENV['CATALOGS_PATH'] ?? 'storage/catalogs';
+
+        // Use absolute path
+        $catalogsPath = $_ENV['CATALOGS_PATH'] ?? (STORAGE_PATH . '/catalogs');
+        $this->catalogsPath = $catalogsPath;
 
         if (!is_dir($this->catalogsPath)) {
-            mkdir($this->catalogsPath, 0755, true);
+            @mkdir($this->catalogsPath, 0777, true);
+            @chmod($this->catalogsPath, 0777);
         }
     }
 
