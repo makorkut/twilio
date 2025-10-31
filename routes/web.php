@@ -1295,7 +1295,7 @@ $router->get('/admin/webhooks', function() {
 
     try {
         $db = container()->get(App\Core\Database::class);
-        $webhooks = $db->query("SELECT * FROM webhooks ORDER BY created_at DESC");
+        $webhooks = $db->query("SELECT * FROM webhook_subscriptions ORDER BY created_at DESC");
 
         ob_start();
         ?>
@@ -1386,33 +1386,13 @@ $router->get('/admin/webhooks', function() {
 });
 
 // ============================================
-// Footer Pages (Placeholder Pages)
+// Footer Pages (Now with proper layouts and headers)
 // ============================================
 
 // Careers
 $router->get('/careers', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Kariyer - Polyurethane</title>
-        <link rel="stylesheet" href="/assets/css/main.css">
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Kariyer Fırsatları</h1>
-        <p>Polyurethane ailesine katılmak ister misiniz? Açık pozisyonlarımız için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/careers.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1420,26 +1400,7 @@ $router->get('/careers', function() {
 // Shipping Info
 $router->get('/shipping', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Kargo & Teslimat - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Kargo & Teslimat</h1>
-        <p>500₺ ve üzeri siparişlerde ücretsiz kargo. Detaylı bilgi için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/shipping.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1447,26 +1408,7 @@ $router->get('/shipping', function() {
 // Returns & Exchange
 $router->get('/returns', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>İade & Değişim - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>İade & Değişim</h1>
-        <p>14 gün içinde iade ve değişim hakkı. Detaylı bilgi için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/returns.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1474,26 +1416,7 @@ $router->get('/returns', function() {
 // FAQ
 $router->get('/faq', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sık Sorulan Sorular - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Sık Sorulan Sorular</h1>
-        <p>Sorularınız için <a href="/contact">iletişime</a> geçebilirsiniz.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/faq.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1501,26 +1424,7 @@ $router->get('/faq', function() {
 // Samples
 $router->get('/samples', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Numune Sipariş - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Numune Sipariş</h1>
-        <p>Ürün numunelerimizi sipariş etmek için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/samples.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1528,26 +1432,7 @@ $router->get('/samples', function() {
 // B2B
 $router->get('/b2b', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bayi Başvurusu - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Bayi Başvurusu</h1>
-        <p>Bayilik başvurunuz için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/b2b.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });
@@ -1555,26 +1440,7 @@ $router->get('/b2b', function() {
 // Wholesale
 $router->get('/wholesale', function() {
     ob_start();
-    ?>
-    <!DOCTYPE html>
-    <html lang="tr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Toptan Fiyatlar - Polyurethane</title>
-        <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .back { display: inline-block; margin-bottom: 20px; color: #667eea; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
-        <h1>Toptan Fiyatlar</h1>
-        <p>Toptan fiyat bilgisi için <a href="/contact">iletişime</a> geçin.</p>
-    </body>
-    </html>
-    <?php
+    include APP_PATH . '/Views/frontend/wholesale.php';
     $html = ob_get_clean();
     return new Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
 });

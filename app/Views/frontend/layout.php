@@ -112,6 +112,69 @@
             font-weight: 500;
         }
 
+        /* Language Switcher */
+        .lang-switcher {
+            position: relative;
+        }
+
+        .lang-current {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--color-bg-gray);
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-current:hover {
+            background: #e8e8e8;
+        }
+
+        .lang-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 120px;
+            z-index: 1000;
+        }
+
+        .lang-switcher:hover .lang-dropdown {
+            display: block;
+        }
+
+        .lang-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            color: var(--color-text);
+            text-decoration: none;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .lang-dropdown a:hover {
+            background: var(--color-bg-gray);
+        }
+
+        .lang-dropdown a.active {
+            background: var(--color-bg-gray);
+            font-weight: 600;
+        }
+
         /* Main Content */
         .container {
             max-width: 1400px;
@@ -252,6 +315,33 @@
             </nav>
 
             <div class="header-actions">
+                <!-- Language Switcher -->
+                <div class="lang-switcher">
+                    <div class="lang-current">
+                        <span>🌐</span>
+                        <span>TR</span>
+                        <span style="font-size: 10px;">▼</span>
+                    </div>
+                    <div class="lang-dropdown">
+                        <a href="?lang=tr" class="active">
+                            <span>🇹🇷</span>
+                            <span>Türkçe</span>
+                        </a>
+                        <a href="?lang=en">
+                            <span>🇬🇧</span>
+                            <span>English</span>
+                        </a>
+                        <a href="?lang=de">
+                            <span>🇩🇪</span>
+                            <span>Deutsch</span>
+                        </a>
+                        <a href="?lang=fr">
+                            <span>🇫🇷</span>
+                            <span>Français</span>
+                        </a>
+                    </div>
+                </div>
+
                 <a href="/search" style="text-decoration: none; color: var(--color-text);">🔍</a>
                 <a href="/cart" class="cart-icon">
                     🛒
