@@ -41,16 +41,67 @@ class Router
         $method = $request->getMethod();
         $path = $request->getPath();
 
-        // Simple routing (for now)
+        // Try exact match first (faster for static routes)
         if (isset($this->routes[$method][$path])) {
             $handler = $this->routes[$method][$path];
 
             if (is_callable($handler)) {
-                $result = $handler($request);
+                $result = $this->executeHandler($handler, $request);
                 return $result instanceof Response ? $result : Response::json($result);
             }
         }
 
-        return Response::notFound('404 - Page Not Found');
+        // Try pattern matching for dynamic routes
+        if (isset($this->routes[$method])) {
+            foreach ($this->routes[$method] as $pattern => $handler) {
+                // Convert route pattern to regex
+                // Example: /admin/products/edit/{id} => /admin/products/edit/([^/]+)
+                $regex = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $pattern);
+                $regex = '#^' . $regex . '$#';
+
+                if (preg_match($regex, $path, $matches)) {
+                    array_shift($matches); // Remove full match
+
+                    if (is_callable($handler)) {
+                        $result = $this->executeHandler($handler, $request, $matches);
+                        return $result instanceof Response ? $result : Response::json($result);
+                    }
+                }
+            }
+        }
+
+        return Response::notFound();
+    }
+
+    protected function executeHandler($handler, Request $request, array $params = [])
+    {
+        if (is_array($handler)) {
+            // Controller@method format
+            [$controller, $method] = $handler;
+            $instance = new $controller();
+            return $instance->$method($request, ...$params);
+        }
+
+        // Closure/function format
+        // Check if handler expects $request as first parameter
+        if ($handler instanceof \Closure) {
+            $reflection = new \ReflectionFunction($handler);
+            $parameters = $reflection->getParameters();
+
+            // If first parameter is typed as Request or named 'request', pass it
+            if (!empty($parameters)) {
+                $firstParam = $parameters[0];
+                $paramType = $firstParam->getType();
+                if (($paramType && $paramType->getName() === 'App\Http\Request') ||
+                    $firstParam->getName() === 'request') {
+                    return $handler($request, ...$params);
+                }
+            }
+
+            // Otherwise, just pass route parameters
+            return $handler(...$params);
+        }
+
+        return $handler($request, ...$params);
     }
 }
