@@ -1,11 +1,11 @@
 <?php
-$pageTitle = 'Ayarlar - Admin Panel';
+$pageTitle = trans('admin.settings.title') . ' - ' . trans('common.dashboard');
 
 ob_start();
 ?>
 
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="<?= get_language_short_form(get_current_language_id()) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,18 +175,18 @@ ob_start();
 <body>
     <!-- Navigation -->
     <nav class="nav">
-        <a href="/admin">Dashboard</a>
-        <a href="/admin/products">Ürünler</a>
-        <a href="/admin/categories">Kategoriler</a>
-        <a href="/admin/orders">Siparişler</a>
-        <a href="/admin/languages">Diller</a>
-        <a href="/admin/settings" style="color: #1a1a1a; font-weight: 600;">Ayarlar</a>
-        <a href="/admin/logout" style="float: right;">Çıkış</a>
+        <a href="/admin"><?= trans('admin.nav.dashboard') ?></a>
+        <a href="/admin/products"><?= trans('admin.nav.products') ?></a>
+        <a href="/admin/categories"><?= trans('admin.nav.categories') ?></a>
+        <a href="/admin/orders"><?= trans('admin.nav.orders') ?></a>
+        <a href="/admin/languages"><?= trans('common.language') ?></a>
+        <a href="/admin/settings" style="color: #1a1a1a; font-weight: 600;"><?= trans('admin.nav.settings') ?></a>
+        <a href="/admin/logout" style="float: right;"><?= trans('common.logout') ?></a>
     </nav>
 
     <!-- Header -->
     <div class="header">
-        <h1>Sistem Ayarları</h1>
+        <h1><?= trans('admin.settings.site_settings') ?></h1>
     </div>
 
     <!-- Main Content -->
@@ -195,101 +195,101 @@ ob_start();
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="product-count">-</div>
-                <div class="stat-label">Toplam Ürün</div>
+                <div class="stat-label"><?= trans('common.products') ?></div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="order-count">-</div>
-                <div class="stat-label">Toplam Sipariş</div>
+                <div class="stat-label"><?= trans('common.orders') ?></div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="customer-count">-</div>
-                <div class="stat-label">Toplam Müşteri</div>
+                <div class="stat-label"><?= trans('common.customers') ?></div>
             </div>
         </div>
 
         <!-- General Settings -->
         <div class="card">
-            <h2>Genel Ayarlar</h2>
+            <h2><?= trans('admin.settings.general') ?></h2>
 
             <div class="info-box">
-                <p><strong>Not:</strong> Bu ayarlar .env dosyasından okunmaktadır. Değişiklikler için .env dosyasını düzenleyin ve sunucuyu yeniden başlatın.</p>
+                <p><strong><?= trans('message.info') ?>:</strong> <?= trans('admin.settings.env_notice', [], null) ?? 'These settings are read from the .env file. To make changes, edit the .env file and restart the server.' ?></p>
             </div>
 
             <form method="POST" action="/admin/settings/update">
                 <div class="form-group">
-                    <label for="site_name">Site Adı</label>
+                    <label for="site_name"><?= trans('admin.settings.site_name') ?></label>
                     <input type="text" id="site_name" name="site_name" value="<?= htmlspecialchars($_ENV['APP_NAME'] ?? 'E-Commerce') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'E-Commerce') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'E-Commerce') ?></small>
                 </div>
 
                 <div class="form-group">
-                    <label for="site_url">Site URL</label>
+                    <label for="site_url"><?= trans('admin.settings.site_url', [], null) ?? 'Site URL' ?></label>
                     <input type="url" id="site_url" name="site_url" value="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['APP_URL'] ?? 'Tanımlı değil') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['APP_URL'] ?? trans('admin.settings.not_defined', [], null) ?? 'Not defined') ?></small>
                 </div>
 
                 <div class="form-group">
-                    <label for="default_lang">Varsayılan Dil</label>
+                    <label for="default_lang"><?= trans('admin.settings.language') ?></label>
                     <input type="text" id="default_lang" name="default_lang" value="<?= htmlspecialchars($_ENV['DEFAULT_LANG'] ?? 'tr') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['DEFAULT_LANG'] ?? 'tr') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['DEFAULT_LANG'] ?? 'tr') ?></small>
                 </div>
 
                 <div class="form-group">
-                    <label for="timezone">Saat Dilimi</label>
+                    <label for="timezone"><?= trans('admin.settings.timezone') ?></label>
                     <input type="text" id="timezone" name="timezone" value="<?= htmlspecialchars($_ENV['APP_TIMEZONE'] ?? 'UTC') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['APP_TIMEZONE'] ?? 'UTC') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['APP_TIMEZONE'] ?? 'UTC') ?></small>
                 </div>
 
                 <div class="form-group">
-                    <label for="currency">Para Birimi</label>
+                    <label for="currency"><?= trans('admin.settings.currency') ?></label>
                     <input type="text" id="currency" name="currency" value="<?= htmlspecialchars($_ENV['DEFAULT_CURRENCY'] ?? 'TRY') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['DEFAULT_CURRENCY'] ?? 'TRY') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['DEFAULT_CURRENCY'] ?? 'TRY') ?></small>
                 </div>
 
                 <div class="form-group">
-                    <label for="debug_mode">Debug Modu</label>
+                    <label for="debug_mode"><?= trans('admin.settings.debug_mode', [], null) ?? 'Debug Mode' ?></label>
                     <input type="text" id="debug_mode" name="debug_mode" value="<?= htmlspecialchars($_ENV['APP_DEBUG'] ?? 'false') ?>" readonly>
-                    <small>Mevcut değer: <?= htmlspecialchars($_ENV['APP_DEBUG'] ?? 'false') ?></small>
+                    <small><?= trans('admin.settings.current_value', [], null) ?? 'Current value' ?>: <?= htmlspecialchars($_ENV['APP_DEBUG'] ?? 'false') ?></small>
                 </div>
             </form>
         </div>
 
         <!-- Database Settings -->
         <div class="card">
-            <h2>Veritabanı Bilgileri</h2>
+            <h2><?= trans('admin.settings.database_info', [], null) ?? 'Database Information' ?></h2>
 
             <div class="form-group">
-                <label>Veritabanı Sunucusu</label>
+                <label><?= trans('admin.settings.db_host', [], null) ?? 'Database Server' ?></label>
                 <input type="text" value="<?= htmlspecialchars($_ENV['DB_HOST'] ?? 'localhost') ?>" readonly>
             </div>
 
             <div class="form-group">
-                <label>Veritabanı Adı</label>
+                <label><?= trans('admin.settings.db_name', [], null) ?? 'Database Name' ?></label>
                 <input type="text" value="<?= htmlspecialchars($_ENV['DB_DATABASE'] ?? '') ?>" readonly>
             </div>
 
             <div class="form-group">
-                <label>Port</label>
+                <label><?= trans('admin.settings.db_port', [], null) ?? 'Port' ?></label>
                 <input type="text" value="<?= htmlspecialchars($_ENV['DB_PORT'] ?? '3306') ?>" readonly>
             </div>
         </div>
 
         <!-- System Info -->
         <div class="card">
-            <h2>Sistem Bilgileri</h2>
+            <h2><?= trans('admin.settings.system_info', [], null) ?? 'System Information' ?></h2>
 
             <div class="form-group">
-                <label>PHP Versiyonu</label>
+                <label><?= trans('admin.settings.php_version', [], null) ?? 'PHP Version' ?></label>
                 <input type="text" value="<?= PHP_VERSION ?>" readonly>
             </div>
 
             <div class="form-group">
-                <label>Sunucu</label>
-                <input type="text" value="<?= $_SERVER['SERVER_SOFTWARE'] ?? 'Bilinmiyor' ?>" readonly>
+                <label><?= trans('admin.settings.server', [], null) ?? 'Server' ?></label>
+                <input type="text" value="<?= $_SERVER['SERVER_SOFTWARE'] ?? trans('admin.settings.unknown', [], null) ?? 'Unknown' ?>" readonly>
             </div>
 
             <div class="form-group">
-                <label>İşletim Sistemi</label>
+                <label><?= trans('admin.settings.operating_system', [], null) ?? 'Operating System' ?></label>
                 <input type="text" value="<?= PHP_OS ?>" readonly>
             </div>
         </div>

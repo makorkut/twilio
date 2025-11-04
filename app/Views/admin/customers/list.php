@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Müşteriler';
+$pageTitle = trans('admin.customers.title');
 $currentPage = 'customers';
 
 $db = container()->get(App\Core\Database::class);
@@ -29,23 +29,23 @@ ob_start();
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
     <div>
-        <h1 class="page-title">Müşteriler</h1>
-        <p class="page-description"><?= count($customers) ?> müşteri</p>
+        <h1 class="page-title"><?= trans('admin.customers.title') ?></h1>
+        <p class="page-description"><?= count($customers) ?> <?= trans('common.customers') ?></p>
     </div>
 </div>
 
 <div class="filters">
     <div class="filter-group">
-        <label class="filter-label">Ara</label>
-        <input type="text" class="form-control" placeholder="Ad, e-posta, telefon..."
+        <label class="filter-label"><?= trans('common.search') ?></label>
+        <input type="text" class="form-control" placeholder="<?= trans('admin.customers.search_placeholder', [], null) ?? 'Name, email, phone...' ?>"
                value="<?= htmlspecialchars($filters['search']) ?>"
                onchange="window.location.href = '?search=' + encodeURIComponent(this.value)">
     </div>
 
     <div class="filter-group">
-        <label class="filter-label">Müşteri Grubu</label>
+        <label class="filter-label"><?= trans('admin.customers.customer_group') ?></label>
         <select class="form-control" onchange="window.location.href = '?group=' + this.value">
-            <option value="">Tümü</option>
+            <option value=""><?= trans('common.all') ?></option>
             <?php
             $groups = $db->fetchAll("SELECT * FROM customer_groups ORDER BY name");
             foreach ($groups as $group):
@@ -58,11 +58,11 @@ ob_start();
     </div>
 
     <div class="filter-group">
-        <label class="filter-label">Durum</label>
+        <label class="filter-label"><?= trans('common.status') ?></label>
         <select class="form-control" onchange="window.location.href = '?status=' + this.value">
-            <option value="">Tümü</option>
-            <option value="active" <?= $filters['status'] === 'active' ? 'selected' : '' ?>>Aktif</option>
-            <option value="inactive" <?= $filters['status'] === 'inactive' ? 'selected' : '' ?>>Pasif</option>
+            <option value=""><?= trans('common.all') ?></option>
+            <option value="active" <?= $filters['status'] === 'active' ? 'selected' : '' ?>><?= trans('common.active') ?></option>
+            <option value="inactive" <?= $filters['status'] === 'inactive' ? 'selected' : '' ?>><?= trans('common.inactive') ?></option>
         </select>
     </div>
 </div>
@@ -71,20 +71,20 @@ ob_start();
     <?php if (empty($customers)): ?>
         <div style="padding: 60px; text-align: center;">
             <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
-            <h3>Henüz müşteri yok</h3>
+            <h3><?= trans('admin.customers.no_customers') ?></h3>
         </div>
     <?php else: ?>
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>Müşteri</th>
-                        <th>E-posta</th>
-                        <th>Telefon</th>
-                        <th style="text-align: center;">Grup</th>
-                        <th style="text-align: center;">Durum</th>
-                        <th>Kayıt Tarihi</th>
-                        <th style="width: 150px;">İşlem</th>
+                        <th><?= trans('admin.customers.customer_name') ?></th>
+                        <th><?= trans('admin.customers.customer_email') ?></th>
+                        <th><?= trans('admin.customers.customer_phone') ?></th>
+                        <th style="text-align: center;"><?= trans('admin.customers.customer_group') ?></th>
+                        <th style="text-align: center;"><?= trans('common.status') ?></th>
+                        <th><?= trans('admin.customers.registration_date') ?></th>
+                        <th style="width: 150px;"><?= trans('common.actions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -102,13 +102,13 @@ ob_start();
                             </td>
                             <td style="text-align: center;">
                                 <span class="badge badge-<?= $customer['status'] ?>">
-                                    <?= ucfirst($customer['status']) ?>
+                                    <?= trans('status.' . $customer['status']) ?>
                                 </span>
                             </td>
                             <td><?= date('d.m.Y', strtotime($customer['created_at'])) ?></td>
                             <td>
                                 <a href="/admin/customers/<?= $customer['id'] ?>" class="btn btn-secondary btn-sm">
-                                    👁️ Detay
+                                    👁️ <?= trans('common.details') ?>
                                 </a>
                             </td>
                         </tr>
