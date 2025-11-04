@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Doküman Yükle';
+$pageTitle = trans('admin.documents.upload');
 $currentPage = 'documents';
 
 $db = container()->get(App\Core\Database::class);

@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Müşteri Detayı';
+$pageTitle = trans('admin.customers.detail');
 $currentPage = 'customers';
 
 if (!isset($customer)) {

@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Medya Kütüphanesi';
+$pageTitle = trans('admin.media.title');
 $currentPage = 'media';
 
 $db = container()->get(App\Core\Database::class);

@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Numune Detayı';
+$pageTitle = trans('admin.samples.detail');
 $currentPage = 'samples';
 
 if (!isset($sample)) {
