@@ -112,36 +112,43 @@ class I18nService
      */
     protected function loadTranslations(int $langId): void
     {
-        // Try to load from cache file
-        $cacheFile = cache_path("i18n/lang_{$langId}.php");
+        try {
+            // Try to load from cache file
+            $cacheFile = cache_path("i18n/lang_{$langId}.php");
 
-        if (file_exists($cacheFile)) {
-            $this->translations = require $cacheFile;
-            $this->cacheLoaded = true;
-            return;
-        }
-
-        // Load from database using lang_id
-        $results = $this->db->query(
-            "SELECT k.key_name, v.value
-             FROM i18n_keys k
-             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
-             WHERE k.is_active = 1",
-            [$langId]
-        );
-
-        $translations = [];
-        foreach ($results as $row) {
-            if ($row['value']) {
-                $translations[$row['key_name']] = $row['value'];
+            if (file_exists($cacheFile)) {
+                $this->translations = require $cacheFile;
+                $this->cacheLoaded = true;
+                return;
             }
+
+            // Load from database using lang_id
+            $results = $this->db->query(
+                "SELECT k.key_name, v.value
+                 FROM i18n_keys k
+                 LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
+                 WHERE k.is_active = 1",
+                [$langId]
+            );
+
+            $translations = [];
+            foreach ($results as $row) {
+                if ($row['value']) {
+                    $translations[$row['key_name']] = $row['value'];
+                }
+            }
+
+            $this->translations = $translations;
+            $this->cacheLoaded = true;
+
+            // Save to cache
+            $this->saveCacheFile($langId, $translations);
+        } catch (\Throwable $e) {
+            // Log error but don't crash - use empty translations
+            error_log("Failed to load translations for lang_id {$langId}: " . $e->getMessage());
+            $this->translations = [];
+            $this->cacheLoaded = true;
         }
-
-        $this->translations = $translations;
-        $this->cacheLoaded = true;
-
-        // Save to cache
-        $this->saveCacheFile($langId, $translations);
     }
 
     /**
@@ -149,17 +156,22 @@ class I18nService
      */
     protected function saveCacheFile(int $langId, array $translations): void
     {
-        $cacheDir = cache_path('i18n');
+        try {
+            $cacheDir = cache_path('i18n');
 
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
+            if (!is_dir($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
+
+            $cacheFile = $cacheDir . "/lang_{$langId}.php";
+
+            $content = "<?php\n\n// Translation cache for lang_id={$langId}\n// Generated: " . date('Y-m-d H:i:s') . "\n\nreturn " . var_export($translations, true) . ";\n";
+
+            file_put_contents($cacheFile, $content);
+        } catch (\Throwable $e) {
+            // Log error but don't crash - cache is optional
+            error_log("Failed to save translation cache for lang_id {$langId}: " . $e->getMessage());
         }
-
-        $cacheFile = $cacheDir . "/lang_{$langId}.php";
-
-        $content = "<?php\n\n// Translation cache for lang_id={$langId}\n// Generated: " . date('Y-m-d H:i:s') . "\n\nreturn " . var_export($translations, true) . ";\n";
-
-        file_put_contents($cacheFile, $content);
     }
 
     /**
