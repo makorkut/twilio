@@ -128,28 +128,35 @@ if (!function_exists('trans')) {
      */
     function trans(string $key, array $params = [], ?int $langId = null): string
     {
-        static $i18nService = null;
+        // Safety wrapper - NEVER throw exceptions, always return something
+        try {
+            static $i18nService = null;
 
-        // Get lang_id from session if not provided
-        if ($langId === null) {
-            $langId = $_SESSION['language_id'] ?? 2; // Default to TR (2)
-        }
-
-        // Initialize I18nService on first call
-        if ($i18nService === null) {
-            $db = container()?->get(\App\Core\Database::class);
-            if (!$db) {
-                return $key; // Fallback if no DB connection
+            // Get lang_id from session if not provided
+            if ($langId === null) {
+                $langId = $_SESSION['language_id'] ?? 2; // Default to TR (2)
             }
-            $i18nService = new \App\Services\I18nService($db, $langId);
-        } else {
-            // Update language if different
-            if ($i18nService->getCurrentLanguageId() !== $langId) {
-                $i18nService->setLanguage($langId);
-            }
-        }
 
-        return $i18nService->get($key, $langId, $params);
+            // Initialize I18nService on first call
+            if ($i18nService === null) {
+                $db = container()?->get(\App\Core\Database::class);
+                if (!$db) {
+                    return $key; // Fallback if no DB connection
+                }
+                $i18nService = new \App\Services\I18nService($db, $langId);
+            } else {
+                // Update language if different
+                if ($i18nService->getCurrentLanguageId() !== $langId) {
+                    $i18nService->setLanguage($langId);
+                }
+            }
+
+            return $i18nService->get($key, $langId, $params);
+        } catch (\Throwable $e) {
+            // Log error but don't break the page
+            error_log("Translation error for key '{$key}': " . $e->getMessage());
+            return $key; // Return key as fallback
+        }
     }
 }
 
