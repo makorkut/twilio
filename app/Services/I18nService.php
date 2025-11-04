@@ -6,57 +6,80 @@ namespace App\Services;
 
 use App\Core\Database;
 
+/**
+ * I18n Service - Language ID Based Translation System
+ *
+ * Uses lang_id (INT) instead of lang_code (VARCHAR) for better performance and referential integrity
+ * Language IDs: 1=EN, 2=TR
+ */
 class I18nService
 {
     protected Database $db;
     protected array $translations = [];
-    protected string $currentLang;
-    protected string $fallbackLang;
+    protected int $currentLangId;
+    protected int $fallbackLangId;
     protected bool $cacheLoaded = false;
 
-    public function __construct(Database $db, ?string $lang = null)
+    // Language ID constants
+    public const LANG_EN = 1;
+    public const LANG_TR = 2;
+
+    public function __construct(Database $db, ?int $langId = null)
     {
         $this->db = $db;
-        $this->currentLang = $lang ?? env('DEFAULT_LANG', 'tr');
-        $this->fallbackLang = env('DEFAULT_LANG', 'tr');
+        $this->currentLangId = $langId ?? (int) (env('DEFAULT_LANG_ID', self::LANG_TR));
+        $this->fallbackLangId = (int) (env('FALLBACK_LANG_ID', self::LANG_EN));
     }
 
     /**
-     * Set current language
+     * Set current language by ID
      */
-    public function setLanguage(string $langCode): void
+    public function setLanguage(int $langId): void
     {
-        $this->currentLang = $langCode;
+        $this->currentLangId = $langId;
         $this->cacheLoaded = false;
         $this->translations = [];
     }
 
     /**
-     * Get current language
+     * Get current language ID
      */
-    public function getCurrentLanguage(): string
+    public function getCurrentLanguageId(): int
     {
-        return $this->currentLang;
+        return $this->currentLangId;
+    }
+
+    /**
+     * Get current language details
+     */
+    public function getCurrentLanguage(): ?array
+    {
+        return $this->getLanguageById($this->currentLangId);
     }
 
     /**
      * Get translation by key
+     *
+     * @param string $key Translation key (e.g., 'common.home', 'admin.products.title')
+     * @param int|null $langId Language ID (1=EN, 2=TR). If null, uses current language
+     * @param array $params Parameters to replace in translation {key} format
+     * @return string Translated text or key if not found
      */
-    public function get(string $key, ?string $lang = null, array $params = []): string
+    public function get(string $key, ?int $langId = null, array $params = []): string
     {
-        $lang = $lang ?? $this->currentLang;
+        $langId = $langId ?? $this->currentLangId;
 
         // Load translations if not loaded
         if (!$this->cacheLoaded) {
-            $this->loadTranslations($lang);
+            $this->loadTranslations($langId);
         }
 
         // Get translation
         $translation = $this->translations[$key] ?? null;
 
         // Fallback to fallback language
-        if ($translation === null && $lang !== $this->fallbackLang) {
-            $this->loadTranslations($this->fallbackLang);
+        if ($translation === null && $langId !== $this->fallbackLangId) {
+            $this->loadTranslations($this->fallbackLangId);
             $translation = $this->translations[$key] ?? null;
         }
 
@@ -65,10 +88,11 @@ class I18nService
             $translation = $key;
         }
 
-        // Replace parameters
+        // Replace parameters {key} format
         if (!empty($params)) {
             foreach ($params as $param => $value) {
-                $translation = str_replace("{{$param}}", $value, $translation);
+                $translation = str_replace("{{$param}}", (string) $value, $translation);
+                $translation = str_replace("%{$param}%", (string) $value, $translation);
             }
         }
 
@@ -86,10 +110,10 @@ class I18nService
     /**
      * Load all translations for a language
      */
-    protected function loadTranslations(string $langCode): void
+    protected function loadTranslations(int $langId): void
     {
         // Try to load from cache file
-        $cacheFile = cache_path("i18n/{$langCode}.php");
+        $cacheFile = cache_path("i18n/lang_{$langId}.php");
 
         if (file_exists($cacheFile)) {
             $this->translations = require $cacheFile;
@@ -97,13 +121,13 @@ class I18nService
             return;
         }
 
-        // Load from database
+        // Load from database using lang_id
         $results = $this->db->query(
             "SELECT k.key_name, v.value
              FROM i18n_keys k
-             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang = ?
+             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
              WHERE k.is_active = 1",
-            [$langCode]
+            [$langId]
         );
 
         $translations = [];
@@ -117,13 +141,13 @@ class I18nService
         $this->cacheLoaded = true;
 
         // Save to cache
-        $this->saveCacheFile($langCode, $translations);
+        $this->saveCacheFile($langId, $translations);
     }
 
     /**
      * Save translations to cache file
      */
-    protected function saveCacheFile(string $langCode, array $translations): void
+    protected function saveCacheFile(int $langId, array $translations): void
     {
         $cacheDir = cache_path('i18n');
 
@@ -131,9 +155,9 @@ class I18nService
             mkdir($cacheDir, 0755, true);
         }
 
-        $cacheFile = $cacheDir . "/{$langCode}.php";
+        $cacheFile = $cacheDir . "/lang_{$langId}.php";
 
-        $content = "<?php\n\nreturn " . var_export($translations, true) . ";\n";
+        $content = "<?php\n\n// Translation cache for lang_id={$langId}\n// Generated: " . date('Y-m-d H:i:s') . "\n\nreturn " . var_export($translations, true) . ";\n";
 
         file_put_contents($cacheFile, $content);
     }
@@ -141,19 +165,19 @@ class I18nService
     /**
      * Clear translation cache
      */
-    public function clearCache(?string $langCode = null): void
+    public function clearCache(?int $langId = null): void
     {
         $cacheDir = cache_path('i18n');
 
-        if ($langCode) {
-            $cacheFile = $cacheDir . "/{$langCode}.php";
+        if ($langId) {
+            $cacheFile = $cacheDir . "/lang_{$langId}.php";
             if (file_exists($cacheFile)) {
                 unlink($cacheFile);
             }
         } else {
             // Clear all language caches
             if (is_dir($cacheDir)) {
-                $files = glob($cacheDir . '/*.php');
+                $files = glob($cacheDir . '/lang_*.php');
                 foreach ($files as $file) {
                     unlink($file);
                 }
@@ -170,33 +194,52 @@ class I18nService
     public function getAvailableLanguages(): array
     {
         return $this->db->query(
-            "SELECT * FROM languages WHERE is_active = 1 ORDER BY sort_order ASC"
+            "SELECT * FROM languages WHERE status = 1 ORDER BY language_order ASC"
         );
     }
 
     /**
-     * Get default language
+     * Get default language (usually TR = id 2)
      */
     public function getDefaultLanguage(): ?array
     {
+        // For now, default is always TR (id=2)
+        return $this->getLanguageById(self::LANG_TR);
+    }
+
+    /**
+     * Get language by ID
+     */
+    public function getLanguageById(int $langId): ?array
+    {
         $result = $this->db->query(
-            "SELECT * FROM languages WHERE is_default = 1 LIMIT 1"
+            "SELECT * FROM languages WHERE id = ? LIMIT 1",
+            [$langId]
         );
 
         return $result[0] ?? null;
     }
 
     /**
-     * Get language by code
+     * Get language by short code (en, tr)
      */
-    public function getLanguage(string $langCode): ?array
+    public function getLanguageByCode(string $shortCode): ?array
     {
         $result = $this->db->query(
-            "SELECT * FROM languages WHERE code = ? LIMIT 1",
-            [$langCode]
+            "SELECT * FROM languages WHERE short_form = ? LIMIT 1",
+            [$shortCode]
         );
 
         return $result[0] ?? null;
+    }
+
+    /**
+     * Convert lang_code to lang_id (for backward compatibility)
+     */
+    public function getLangIdByCode(string $shortCode): int
+    {
+        $lang = $this->getLanguageByCode($shortCode);
+        return $lang ? (int) $lang['id'] : $this->fallbackLangId;
     }
 
     /**
@@ -204,6 +247,11 @@ class I18nService
      */
     public function createKey(string $keyName, ?string $group = null, ?string $description = null): int
     {
+        // Extract group from key_name if not provided
+        if (!$group && strpos($keyName, '.') !== false) {
+            $group = explode('.', $keyName)[0];
+        }
+
         // Check if key exists
         $existing = $this->db->query(
             "SELECT id FROM i18n_keys WHERE key_name = ? LIMIT 1",
@@ -216,7 +264,7 @@ class I18nService
 
         $data = [
             'key_name' => $keyName,
-            'group' => $group,
+            'group' => $group ?? 'common',
             'description' => $description,
             'is_active' => 1,
             'created_at' => date('Y-m-d H:i:s'),
@@ -226,17 +274,17 @@ class I18nService
     }
 
     /**
-     * Set translation value
+     * Set translation value using lang_id
      */
-    public function setValue(string $keyName, string $langCode, string $value): void
+    public function setValue(string $keyName, int $langId, string $value): void
     {
         // Get or create key
         $keyId = $this->createKey($keyName);
 
         // Check if value exists
         $existing = $this->db->query(
-            "SELECT id FROM i18n_values WHERE key_id = ? AND lang = ? LIMIT 1",
-            [$keyId, $langCode]
+            "SELECT id FROM i18n_values WHERE key_id = ? AND lang_id = ? LIMIT 1",
+            [$keyId, $langId]
         );
 
         if (!empty($existing)) {
@@ -246,20 +294,20 @@ class I18nService
                 'updated_at' => date('Y-m-d H:i:s'),
             ], [
                 'key_id' => $keyId,
-                'lang' => $langCode,
+                'lang_id' => $langId,
             ]);
         } else {
             // Insert new
             $this->db->insert('i18n_values', [
                 'key_id' => $keyId,
-                'lang' => $langCode,
+                'lang_id' => $langId,
                 'value' => $value,
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
         }
 
         // Clear cache for this language
-        $this->clearCache($langCode);
+        $this->clearCache($langId);
     }
 
     /**
@@ -268,16 +316,22 @@ class I18nService
     public function getKeyTranslations(string $keyName): array
     {
         $result = $this->db->query(
-            "SELECT v.lang, v.value
+            "SELECT v.lang_id, v.value, l.short_form, l.name
              FROM i18n_keys k
              INNER JOIN i18n_values v ON v.key_id = k.id
+             INNER JOIN languages l ON l.id = v.lang_id
              WHERE k.key_name = ?",
             [$keyName]
         );
 
         $translations = [];
         foreach ($result as $row) {
-            $translations[$row['lang']] = $row['value'];
+            $translations[$row['lang_id']] = [
+                'lang_id' => $row['lang_id'],
+                'short_form' => $row['short_form'],
+                'name' => $row['name'],
+                'value' => $row['value'],
+            ];
         }
 
         return $translations;
@@ -296,14 +350,18 @@ class I18nService
 
     /**
      * Import translations from array
+     *
+     * @param array $translations Array of ['key' => 'value']
+     * @param int $langId Language ID
+     * @return int Number of keys imported
      */
-    public function import(array $translations, string $langCode): int
+    public function import(array $translations, int $langId): int
     {
         $count = 0;
 
         foreach ($translations as $keyName => $value) {
             try {
-                $this->setValue($keyName, $langCode, $value);
+                $this->setValue($keyName, $langId, $value);
                 $count++;
             } catch (\Exception $e) {
                 // Continue on error
@@ -316,17 +374,17 @@ class I18nService
     /**
      * Export translations to array
      */
-    public function export(string $langCode, ?string $group = null): array
+    public function export(int $langId, ?string $group = null): array
     {
         $query = "SELECT k.key_name, v.value
                   FROM i18n_keys k
-                  LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang = ?
+                  LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
                   WHERE k.is_active = 1";
 
-        $params = [$langCode];
+        $params = [$langId];
 
         if ($group) {
-            $query .= " AND k.group = ?";
+            $query .= " AND k.`group` = ?";
             $params[] = $group;
         }
 
@@ -345,16 +403,16 @@ class I18nService
     /**
      * Get missing translations (keys without values for a language)
      */
-    public function getMissingTranslations(string $langCode): array
+    public function getMissingTranslations(int $langId): array
     {
         $results = $this->db->query(
             "SELECT k.*
              FROM i18n_keys k
-             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang = ?
+             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
              WHERE k.is_active = 1
              AND (v.id IS NULL OR v.value = '' OR v.value IS NULL)
-             ORDER BY k.group ASC, k.key_name ASC",
-            [$langCode]
+             ORDER BY k.`group` ASC, k.key_name ASC",
+            [$langId]
         );
 
         return $results;
@@ -363,7 +421,7 @@ class I18nService
     /**
      * Get translation completion percentage
      */
-    public function getCompletionPercentage(string $langCode): float
+    public function getCompletionPercentage(int $langId): float
     {
         $totalKeys = $this->db->query(
             "SELECT COUNT(*) as count FROM i18n_keys WHERE is_active = 1"
@@ -376,132 +434,14 @@ class I18nService
         $translatedKeys = $this->db->query(
             "SELECT COUNT(*) as count
              FROM i18n_keys k
-             INNER JOIN i18n_values v ON v.key_id = k.id AND v.lang = ?
+             INNER JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
              WHERE k.is_active = 1
              AND v.value IS NOT NULL
              AND v.value != ''",
-            [$langCode]
+            [$langId]
         )[0]['count'];
 
         return ($translatedKeys / $totalKeys) * 100;
-    }
-
-    /**
-     * Format date according to language settings
-     */
-    public function formatDate(string $date, ?string $langCode = null): string
-    {
-        $langCode = $langCode ?? $this->currentLang;
-
-        $language = $this->getLanguage($langCode);
-        if (!$language || !$language['date_format']) {
-            return date('Y-m-d', strtotime($date));
-        }
-
-        return date($language['date_format'], strtotime($date));
-    }
-
-    /**
-     * Format number according to language settings
-     */
-    public function formatNumber(float $number, int $decimals = 2, ?string $langCode = null): string
-    {
-        $langCode = $langCode ?? $this->currentLang;
-
-        $language = $this->getLanguage($langCode);
-        if (!$language) {
-            return number_format($number, $decimals);
-        }
-
-        $decimalSep = $language['decimal_separator'] ?? '.';
-        $thousandsSep = $language['thousands_separator'] ?? ',';
-
-        return number_format($number, $decimals, $decimalSep, $thousandsSep);
-    }
-
-    /**
-     * Detect language from browser
-     */
-    public function detectLanguageFromBrowser(?string $acceptLanguageHeader = null): string
-    {
-        $acceptLanguageHeader = $acceptLanguageHeader ?? ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '');
-
-        if (empty($acceptLanguageHeader)) {
-            return $this->fallbackLang;
-        }
-
-        // Parse Accept-Language header
-        preg_match_all('/([a-z]{2})(?:-[A-Z]{2})?(?:;q=([0-9.]+))?/', $acceptLanguageHeader, $matches);
-
-        if (empty($matches[1])) {
-            return $this->fallbackLang;
-        }
-
-        // Get available language codes
-        $availableLanguages = $this->getAvailableLanguages();
-        $availableCodes = array_column($availableLanguages, 'code');
-
-        // Find best match
-        foreach ($matches[1] as $browserLang) {
-            if (in_array($browserLang, $availableCodes)) {
-                return $browserLang;
-            }
-        }
-
-        return $this->fallbackLang;
-    }
-
-    /**
-     * Get language from URL path
-     */
-    public function getLanguageFromPath(string $path): ?string
-    {
-        // Extract language code from path (e.g., /tr/products -> tr)
-        if (preg_match('#^/([a-z]{2})(?:/|$)#', $path, $matches)) {
-            $langCode = $matches[1];
-
-            // Verify it's a valid language
-            $language = $this->getLanguage($langCode);
-            if ($language) {
-                return $langCode;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Get localized URL
-     */
-    public function localizeUrl(string $path, ?string $langCode = null): string
-    {
-        $langCode = $langCode ?? $this->currentLang;
-        $defaultLang = $this->getDefaultLanguage();
-
-        // Remove existing language code from path
-        $path = preg_replace('#^/[a-z]{2}(?=/|$)#', '', $path);
-
-        // Add language code if not default language
-        if (!$defaultLang || $langCode !== $defaultLang['code']) {
-            $path = '/' . $langCode . $path;
-        }
-
-        return $path;
-    }
-
-    /**
-     * Get alternative language URLs for a path (for hreflang tags)
-     */
-    public function getAlternateUrls(string $path): array
-    {
-        $languages = $this->getAvailableLanguages();
-        $urls = [];
-
-        foreach ($languages as $language) {
-            $urls[$language['code']] = $this->localizeUrl($path, $language['code']);
-        }
-
-        return $urls;
     }
 
     /**
@@ -514,11 +454,11 @@ class I18nService
 
         foreach ($languages as $language) {
             try {
-                $this->clearCache($language['code']);
-                $this->loadTranslations($language['code']);
-                $results[$language['code']] = 'success';
+                $this->clearCache($language['id']);
+                $this->loadTranslations($language['id']);
+                $results[$language['id']] = 'success';
             } catch (\Exception $e) {
-                $results[$language['code']] = 'error: ' . $e->getMessage();
+                $results[$language['id']] = 'error: ' . $e->getMessage();
             }
         }
 
@@ -528,19 +468,19 @@ class I18nService
     /**
      * Search translations
      */
-    public function search(string $query, ?string $langCode = null): array
+    public function search(string $query, ?int $langId = null): array
     {
-        $langCode = $langCode ?? $this->currentLang;
+        $langId = $langId ?? $this->currentLangId;
 
         return $this->db->query(
-            "SELECT k.key_name, k.group, v.value
+            "SELECT k.key_name, k.`group`, v.value
              FROM i18n_keys k
-             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang = ?
+             LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
              WHERE k.is_active = 1
              AND (k.key_name LIKE ? OR v.value LIKE ?)
              ORDER BY k.key_name ASC
              LIMIT 100",
-            [$langCode, "%{$query}%", "%{$query}%"]
+            [$langId, "%{$query}%", "%{$query}%"]
         );
     }
 }
