@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Teknik Dokümanlar';
+$pageTitle = trans('admin.documents.title');
 $currentPage = 'documents';
 
 $db = container()->get(App\Core\Database::class);

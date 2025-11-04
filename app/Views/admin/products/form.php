@@ -4,7 +4,7 @@
  * Comprehensive form for creating and editing products
  */
 
-$pageTitle = isset($product) ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle';
+$pageTitle = isset($product) ? trans('admin.products.edit_product') : trans('admin.products.add_product');
 $currentPage = 'products';
 
 // Get categories for dropdown
@@ -232,7 +232,7 @@ ob_start();
     <div>
         <h1 class="page-title"><?= $pageTitle ?></h1>
         <p class="page-description">
-            <?= $isEdit ? 'Ürün bilgilerini güncelleyin' : 'Yeni bir ürün oluşturun' ?>
+            <?= $isEdit ? trans('admin.products.update_product_info', [], null) ?? 'Update product information' : trans('admin.products.create_new_product', [], null) ?? 'Create a new product' ?>
         </p>
     </div>
 </div>
@@ -463,15 +463,15 @@ ob_start();
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Birim Başına Kaplama *</label>
+                            <label class="form-label"><?= trans('admin.products.coverage_per_unit', [], null) ?? 'Coverage Per Unit' ?> *</label>
                             <input type="number" name="coverage_per_unit" class="form-control" step="0.01"
                                    value="<?= htmlspecialchars($product['coverage_per_unit'] ?? '1') ?>"
-                                   placeholder="Örn: 1.5">
-                            <div class="form-hint">Bir birim ürün kaç m² / m³ / m kaplar?</div>
+                                   placeholder="<?= trans('admin.products.example_short', [], null) ?? 'e.g.' ?>: 1.5">
+                            <div class="form-hint"><?= trans('admin.products.coverage_hint', [], null) ?? 'How many m² / m³ / m does one unit cover?' ?></div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Birim</label>
+                            <label class="form-label"><?= trans('admin.products.unit') ?></label>
                             <select name="coverage_unit" class="form-control">
                                 <option value="m²" <?= ($product['coverage_unit'] ?? 'm²') === 'm²' ? 'selected' : '' ?>>m² (Metrekare)</option>
                                 <option value="m³" <?= ($product['coverage_unit'] ?? '') === 'm³' ? 'selected' : '' ?>>m³ (Metreküp)</option>
@@ -611,10 +611,10 @@ ob_start();
 
     <!-- Form Actions -->
     <div class="form-actions">
-        <a href="/admin/products" class="btn btn-secondary">İptal</a>
-        <button type="submit" name="action" value="draft" class="btn btn-secondary">Taslak Olarak Kaydet</button>
+        <a href="/admin/products" class="btn btn-secondary"><?= trans('common.cancel') ?></a>
+        <button type="submit" name="action" value="draft" class="btn btn-secondary"><?= trans('admin.products.save_as_draft', [], null) ?? 'Save as Draft' ?></button>
         <button type="submit" name="action" value="publish" class="btn btn-primary">
-            <?= $isEdit ? 'Güncelle' : 'Yayınla' ?>
+            <?= $isEdit ? trans('common.update', [], null) ?? 'Update' : trans('common.publish', [], null) ?? 'Publish' ?>
         </button>
     </div>
 </form>
@@ -653,7 +653,7 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
 
     if (!name || !sku || !basePrice) {
         e.preventDefault();
-        alert('Lütfen zorunlu alanları doldurun:\n- Ürün Adı\n- SKU\n- Satış Fiyatı');
+        alert('<?= trans('admin.products.required_fields_warning', [], null) ?? "Please fill required fields:\\n- Product Name\\n- SKU\\n- Sale Price" ?>');
         return false;
     }
 

@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Siparişler';
+$pageTitle = trans('common.orders');
 $currentPage = 'orders';
 
 $db = container()->get(App\Core\Database::class);

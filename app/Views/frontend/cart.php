@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Sepetim';
+$pageTitle = trans('cart.title');
 
 // Safely get cart data
 $cart = [];

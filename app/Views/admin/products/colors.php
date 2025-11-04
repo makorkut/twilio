@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Ürün Renkleri';
+$pageTitle = trans('admin.products.color_management');
 $currentPage = 'products';
 
 if (!isset($product)) {
@@ -32,28 +32,28 @@ ob_start();
     <div class="form-main">
         <!-- Add Color Form -->
         <div class="form-section">
-            <h3 class="form-section-title">Yeni Renk/Doku Ekle</h3>
+            <h3 class="form-section-title"><?= trans('admin.products.add_color') ?></h3>
 
             <form method="POST" action="/admin/products/<?= $product['id'] ?>/colors/add">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Renk Adı *</label>
+                        <label class="form-label"><?= trans('admin.products.color_name') ?> *</label>
                         <input type="text" name="name" class="form-control" required
-                               placeholder="Örn: Beyaz, Antrasit, Ahşap Doku">
+                               placeholder="<?= trans('admin.products.color_example', [], null) ?? 'e.g.: White, Anthracite, Wood Texture' ?>">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Renk Kodu</label>
+                        <label class="form-label"><?= trans('admin.products.color_code') ?></label>
                         <input type="text" name="color_code" class="form-control"
-                               placeholder="Örn: W100, ANT-200">
+                               placeholder="<?= trans('admin.products.example_short', [], null) ?? 'e.g.' ?>: W100, ANT-200">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">RAL Kodu</label>
+                        <label class="form-label"><?= trans('admin.products.ral_code', [], null) ?? 'RAL Code' ?></label>
                         <input type="text" name="ral_code" class="form-control" list="ral-colors"
-                               placeholder="Örn: RAL 9010">
+                               placeholder="<?= trans('admin.products.example_short', [], null) ?? 'e.g.' ?>: RAL 9010">
                         <datalist id="ral-colors">
                             <option value="RAL 9010">Pure white</option>
                             <option value="RAL 9003">Signal white</option>
@@ -78,9 +78,9 @@ ob_start();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Doku Tipi</label>
+                        <label class="form-label"><?= trans('admin.products.texture_type', [], null) ?? 'Texture Type' ?></label>
                         <select name="texture_type" class="form-control">
-                            <option value="">Seçiniz...</option>
+                            <option value=""><?= trans('common.select') ?>...</option>
                             <?php foreach (App\Services\ColorCatalogService::getTextureTypes() as $value => $label): ?>
                                 <option value="<?= $value ?>"><?= $label ?></option>
                             <?php endforeach; ?>
@@ -88,9 +88,9 @@ ob_start();
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Yüzey Tipi</label>
+                        <label class="form-label"><?= trans('admin.products.finish_type', [], null) ?? 'Finish Type' ?></label>
                         <select name="finish_type" class="form-control">
-                            <option value="">Seçiniz...</option>
+                            <option value=""><?= trans('common.select') ?>...</option>
                             <?php foreach (App\Services\ColorCatalogService::getFinishTypes() as $value => $label): ?>
                                 <option value="<?= $value ?>"><?= $label ?></option>
                             <?php endforeach; ?>
@@ -100,21 +100,21 @@ ob_start();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Fiyat Değişikliği</label>
+                        <label class="form-label"><?= trans('admin.products.price_modifier', [], null) ?? 'Price Adjustment' ?></label>
                         <input type="number" name="price_modifier" class="form-control" step="0.01" value="0"
                                placeholder="0.00">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Değişiklik Tipi</label>
+                        <label class="form-label"><?= trans('admin.products.modifier_type', [], null) ?? 'Adjustment Type' ?></label>
                         <select name="price_modifier_type" class="form-control">
-                            <option value="fixed">Sabit (₺)</option>
-                            <option value="percent">Yüzde (%)</option>
+                            <option value="fixed"><?= trans('admin.products.fixed_price', [], null) ?? 'Fixed' ?> (₺)</option>
+                            <option value="percent"><?= trans('admin.products.percentage', [], null) ?? 'Percentage' ?> (%)</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Stok Miktarı</label>
+                        <label class="form-label"><?= trans('admin.products.stock_quantity') ?></label>
                         <input type="number" name="stock_quantity" class="form-control" value="0" min="0">
                     </div>
                 </div>

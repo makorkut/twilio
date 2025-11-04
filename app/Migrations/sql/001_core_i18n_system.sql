@@ -4,17 +4,15 @@
 
 -- Languages table
 CREATE TABLE IF NOT EXISTS languages (
-  id INT PRIMARY KEY AUTO_INCREMENT,
+  id INT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  language_code VARCHAR(5) NOT NULL UNIQUE,
-  locale_code VARCHAR(10) DEFAULT NULL,
-  text_editor_lang VARCHAR(50) DEFAULT NULL,
+  short_form VARCHAR(10) NOT NULL,
+  language_code VARCHAR(10) NOT NULL UNIQUE,
+  text_direction ENUM('ltr', 'rtl') DEFAULT 'ltr',
   status TINYINT(1) DEFAULT 1,
-  is_default TINYINT(1) DEFAULT 0,
-  date_format VARCHAR(50) DEFAULT 'd/m/Y',
-  time_format VARCHAR(20) DEFAULT 'H:i',
-  decimal_separator CHAR(1) DEFAULT ',',
-  thousands_separator CHAR(1) DEFAULT '.',
+  language_order INT DEFAULT 1,
+  text_editor_lang VARCHAR(50) DEFAULT NULL,
+  flag_path VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -22,10 +20,15 @@ CREATE TABLE IF NOT EXISTS languages (
   INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default languages if not exists
-INSERT IGNORE INTO languages (name, language_code, locale_code, text_editor_lang, status, is_default) VALUES
-('Türkçe', 'tr', 'tr_TR', 'tr', 1, 1),
-('English', 'en', 'en_US', 'en', 1, 0);
+-- Insert default languages with explicit IDs (EN=1, TR=2)
+INSERT INTO languages (id, name, short_form, language_code, text_direction, status, language_order, text_editor_lang, flag_path) VALUES
+(1, 'ENGLISH', 'en', 'en-US', 'ltr', 1, 1, 'en', 'uploads/flags/gb.svg'),
+(2, 'TÜRKÇE', 'tr', 'tr-TR', 'ltr', 1, 2, 'tr', 'uploads/flags/tr.svg')
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  short_form = VALUES(short_form),
+  language_code = VALUES(language_code),
+  status = VALUES(status);
 
 -- Note: Default language enforcement moved to application layer
 -- MySQL triggers cannot UPDATE the same table (mutating table error)
@@ -34,57 +37,35 @@ INSERT IGNORE INTO languages (name, language_code, locale_code, text_editor_lang
 -- i18n keys table (UI translations)
 CREATE TABLE IF NOT EXISTS i18n_keys (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  `group` VARCHAR(100) NOT NULL,
-  dot_key VARCHAR(255) NOT NULL,
+  key_name VARCHAR(255) NOT NULL UNIQUE COMMENT 'Dot notation key: common.home, admin.products.title',
+  `group` VARCHAR(100) NOT NULL COMMENT 'First part of key: common, admin, product',
   description VARCHAR(500) DEFAULT NULL,
+  is_active TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  UNIQUE KEY uniq_group_key (`group`, dot_key),
-  INDEX idx_group (`group`)
+  UNIQUE KEY uniq_key_name (key_name),
+  INDEX idx_group (`group`),
+  INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- i18n values table
+-- i18n values table (NOW USES lang_id instead of lang_code)
 CREATE TABLE IF NOT EXISTS i18n_values (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   key_id INT NOT NULL,
-  lang_code VARCHAR(5) NOT NULL,
-  value_text TEXT NOT NULL,
+  lang_id INT NOT NULL COMMENT 'Foreign key to languages.id (1=EN, 2=TR)',
+  value TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-  UNIQUE KEY uniq_key_lang (key_id, lang_code),
+  UNIQUE KEY uniq_key_lang (key_id, lang_id),
   FOREIGN KEY (key_id) REFERENCES i18n_keys(id) ON DELETE CASCADE,
+  FOREIGN KEY (lang_id) REFERENCES languages(id) ON DELETE CASCADE,
 
-  INDEX idx_lang_code (lang_code)
+  INDEX idx_lang_id (lang_id),
+  INDEX idx_key_id (key_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed basic i18n keys
-INSERT INTO i18n_keys (`group`, dot_key, description) VALUES
-('common', 'home', 'Home link'),
-('common', 'products', 'Products link'),
-('common', 'categories', 'Categories link'),
-('common', 'cart', 'Shopping cart'),
-('common', 'checkout', 'Checkout'),
-('common', 'login', 'Login'),
-('common', 'register', 'Register'),
-('common', 'logout', 'Logout'),
-('common', 'search', 'Search placeholder'),
-('common', 'add_to_cart', 'Add to cart button'),
-('common', 'buy_now', 'Buy now button'),
-('common', 'view_more', 'View more link'),
-('product', 'description', 'Description tab'),
-('product', 'specifications', 'Specifications tab'),
-('product', 'reviews', 'Reviews tab'),
-('product', 'technical_docs', 'Technical documents tab'),
-('product', 'out_of_stock', 'Out of stock message'),
-('product', 'in_stock', 'In stock message'),
-('cart', 'empty', 'Empty cart message'),
-('cart', 'subtotal', 'Subtotal label'),
-('cart', 'total', 'Total label'),
-('checkout', 'billing_address', 'Billing address'),
-('checkout', 'shipping_address', 'Shipping address'),
-('checkout', 'payment_method', 'Payment method'),
-('checkout', 'place_order', 'Place order button')
-ON DUPLICATE KEY UPDATE description=VALUES(description);
+-- Note: Translation keys will be seeded by separate migration (012_translation_keys.sql)
 
 -- ============================================
 -- Currencies Table (required by 002_multi_currency_pricing.sql)
