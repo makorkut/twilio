@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Katalog Oluştur';
+$pageTitle = trans('admin.catalogs.generate', [], null) ?? 'Generate Catalog';
 $currentPage = 'catalogs';
 
 $db = container()->get(App\Core\Database::class);

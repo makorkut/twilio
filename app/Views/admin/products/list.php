@@ -4,7 +4,7 @@
  * CRUD operations for products
  */
 
-$pageTitle = 'Ürünler';
+$pageTitle = trans('admin.products.title');
 $currentPage = 'products';
 
 // Get products from database

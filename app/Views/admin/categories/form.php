@@ -3,7 +3,7 @@
  * Admin - Category Add/Edit Form
  */
 
-$pageTitle = isset($category) ? 'Kategori Düzenle' : 'Yeni Kategori Ekle';
+$pageTitle = isset($category) ? trans('admin.categories.edit_category') : trans('admin.categories.add_category');
 $currentPage = 'categories';
 $isEdit = isset($category);
 $category = $category ?? [];

@@ -4,7 +4,7 @@
  * Hierarchical category management
  */
 
-$pageTitle = 'Kategoriler';
+$pageTitle = trans('admin.categories.title');
 $currentPage = 'categories';
 
 // Get categories from database

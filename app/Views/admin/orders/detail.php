@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Sipariş Detayı';
+$pageTitle = trans('admin.orders.detail', [], null) ?? 'Order Details';
 $currentPage = 'orders';
 
 if (!isset($order)) {

@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'QR Kod Yönetimi';
+$pageTitle = trans('admin.products.qrcode');
 $currentPage = 'products';
 
 if (!isset($product)) {
