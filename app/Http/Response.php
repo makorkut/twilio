@@ -55,7 +55,44 @@ class Response
 
     public static function notFound(string $message = 'Not Found'): self
     {
+        // Try to render error view, fallback to simple message
+        $errorViewPath = APP_PATH . '/Views/errors/404.php';
+        if (file_exists($errorViewPath)) {
+            ob_start();
+            include $errorViewPath;
+            $content = ob_get_clean();
+            return new static($content, 404, ['Content-Type' => 'text/html; charset=utf-8']);
+        }
+
         return new static($message, 404);
+    }
+
+    public static function notImplemented(string $message = 'Not Implemented'): self
+    {
+        // Try to render error view, fallback to simple message
+        $errorViewPath = APP_PATH . '/Views/errors/501.php';
+        if (file_exists($errorViewPath)) {
+            ob_start();
+            include $errorViewPath;
+            $content = ob_get_clean();
+            return new static($content, 501, ['Content-Type' => 'text/html; charset=utf-8']);
+        }
+
+        return new static($message, 501);
+    }
+
+    public static function serviceUnavailable(string $message = 'Service Unavailable'): self
+    {
+        // Try to render error view, fallback to simple message
+        $errorViewPath = APP_PATH . '/Views/errors/503.php';
+        if (file_exists($errorViewPath)) {
+            ob_start();
+            include $errorViewPath;
+            $content = ob_get_clean();
+            return new static($content, 503, ['Content-Type' => 'text/html; charset=utf-8']);
+        }
+
+        return new static($message, 503);
     }
 
     public static function redirect(string $url, int $statusCode = 302): self
