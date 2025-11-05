@@ -606,6 +606,7 @@ ob_start();
                 </div>
             </div>
             <?php endif; ?>
+            <?php endif; ?> <!-- Close statistics section if ($isEdit) from line 571 -->
         </div>
     </div>
 
