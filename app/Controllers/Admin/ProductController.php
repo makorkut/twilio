@@ -78,7 +78,7 @@ class ProductController
         $langParams = [env('DEFAULT_LANG', 'tr')];
         $finalParams = array_merge($langParams, $params, [$perPage, $offset]);
 
-        $products = $this->db->query($query, $finalParams);
+        $products = $this->db->fetchAll($query, $finalParams);
 
         // Get total count
         $countQuery = "SELECT COUNT(DISTINCT p.id) as total
@@ -87,7 +87,8 @@ class ProductController
                        {$whereClause}";
 
         $countParams = array_merge($langParams, $params);
-        $total = $this->db->query($countQuery, $countParams)[0]['total'];
+        $countResult = $this->db->fetch($countQuery, $countParams);
+        $total = $countResult['total'] ?? 0;
 
         return Response::json([
             'success' => true,
@@ -273,7 +274,7 @@ class ProductController
      */
     public function statistics(Request $request): Response
     {
-        $stats = $this->db->query(
+        $stats = $this->db->fetch(
             "SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -286,7 +287,7 @@ class ProductController
 
         return Response::json([
             'success' => true,
-            'data' => $stats[0],
+            'data' => $stats ?? [],
         ]);
     }
 

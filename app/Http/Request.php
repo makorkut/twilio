@@ -43,6 +43,15 @@ class Request
         return $this->request[$key] ?? $default;
     }
 
+    /**
+     * Get a value from either GET or POST parameters
+     * Checks GET first, then POST
+     */
+    public function get(string $key, $default = null)
+    {
+        return $this->query[$key] ?? $this->request[$key] ?? $default;
+    }
+
     public function all(): array
     {
         return array_merge($this->query, $this->request);
