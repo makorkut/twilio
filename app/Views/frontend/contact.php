@@ -1,6 +1,6 @@
 <?php
-$pageTitle = 'İletişim - Polyurethane';
-$metaDescription = 'Bizimle iletişime geçin. Sorularınız için 7/24 hizmetinizdeyiz.';
+$pageTitle = trans('frontend.contact.page_title');
+$metaDescription = trans('frontend.contact.meta_description');
 
 ob_start();
 ?>
@@ -179,8 +179,8 @@ ob_start();
 <!-- Hero Section -->
 <section class="page-hero">
     <div class="container-narrow">
-        <h1>İletişim</h1>
-        <p>Sorularınız, önerileriniz veya iş birlikleri için bizimle iletişime geçin. Uzman ekibimiz size en kısa sürede dönüş yapacaktır.</p>
+        <h1><?= trans('frontend.contact.heading') ?></h1>
+        <p><?= trans('frontend.contact.hero_text') ?></p>
     </div>
 </section>
 
@@ -193,15 +193,15 @@ ob_start();
                 <div class="contact-item">
                     <div class="contact-icon">📍</div>
                     <div class="contact-details">
-                        <h3>Adres</h3>
-                        <p>Örnek Mahallesi, Polyurethane Sokak No:123<br>Kadıköy, İstanbul 34700<br>Türkiye</p>
+                        <h3><?= trans('frontend.contact.address') ?></h3>
+                        <p><?= trans('frontend.contact.address_text') ?></p>
                     </div>
                 </div>
 
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
                     <div class="contact-details">
-                        <h3>Telefon</h3>
+                        <h3><?= trans('frontend.contact.phone') ?></h3>
                         <p>+90 (216) 555 0 555<br>+90 (532) 555 0 555 (WhatsApp)</p>
                     </div>
                 </div>
@@ -209,7 +209,7 @@ ob_start();
                 <div class="contact-item">
                     <div class="contact-icon">✉️</div>
                     <div class="contact-details">
-                        <h3>E-posta</h3>
+                        <h3><?= trans('frontend.contact.email') ?></h3>
                         <p>info@polyurethane.com<br>sales@polyurethane.com</p>
                     </div>
                 </div>
@@ -217,43 +217,43 @@ ob_start();
                 <div class="contact-item">
                     <div class="contact-icon">🕐</div>
                     <div class="contact-details">
-                        <h3>Çalışma Saatleri</h3>
-                        <p>Pazartesi - Cuma: 09:00 - 18:00<br>Cumartesi: 09:00 - 14:00<br>Pazar: Kapalı</p>
+                        <h3><?= trans('frontend.contact.working_hours') ?></h3>
+                        <p><?= trans('frontend.contact.working_hours_text') ?></p>
                     </div>
                 </div>
             </div>
 
             <!-- Contact Form -->
             <div class="contact-form">
-                <h2 style="font-size: 24px; font-weight: 500; margin-bottom: 24px; color: var(--color-primary);">Bize Ulaşın</h2>
+                <h2 style="font-size: 24px; font-weight: 500; margin-bottom: 24px; color: var(--color-primary);"><?= trans('frontend.contact.form_title') ?></h2>
 
                 <form action="/contact/submit" method="POST">
                     <div class="form-group">
-                        <label for="name">Ad Soyad *</label>
+                        <label for="name"><?= trans('frontend.contact.full_name') ?></label>
                         <input type="text" id="name" name="name" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="email">E-posta *</label>
+                        <label for="email"><?= trans('frontend.contact.email_field') ?></label>
                         <input type="email" id="email" name="email" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="phone">Telefon</label>
+                        <label for="phone"><?= trans('frontend.contact.phone_field') ?></label>
                         <input type="tel" id="phone" name="phone">
                     </div>
 
                     <div class="form-group">
-                        <label for="subject">Konu *</label>
+                        <label for="subject"><?= trans('frontend.contact.subject') ?></label>
                         <input type="text" id="subject" name="subject" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="message">Mesajınız *</label>
+                        <label for="message"><?= trans('frontend.contact.message') ?></label>
                         <textarea id="message" name="message" required></textarea>
                     </div>
 
-                    <button type="submit" class="btn form-submit">Gönder</button>
+                    <button type="submit" class="btn form-submit"><?= trans('common.send') ?></button>
                 </form>
             </div>
         </div>
@@ -262,20 +262,20 @@ ob_start();
         <div class="info-cards">
             <div class="info-card">
                 <div class="info-card-icon">💬</div>
-                <h3>Canlı Destek</h3>
-                <p>7/24 canlı destek hattımızdan bize ulaşabilirsiniz</p>
+                <h3><?= trans('frontend.contact.live_support') ?></h3>
+                <p><?= trans('frontend.contact.live_support_text') ?></p>
             </div>
 
             <div class="info-card">
                 <div class="info-card-icon">📧</div>
-                <h3>E-posta Desteği</h3>
-                <p>E-postalarınıza 24 saat içinde yanıt veriyoruz</p>
+                <h3><?= trans('frontend.contact.email_support') ?></h3>
+                <p><?= trans('frontend.contact.email_support_text') ?></p>
             </div>
 
             <div class="info-card">
                 <div class="info-card-icon">🎯</div>
-                <h3>Teknik Danışmanlık</h3>
-                <p>Ürün seçimi ve montaj için ücretsiz danışmanlık</p>
+                <h3><?= trans('frontend.contact.technical_consulting') ?></h3>
+                <p><?= trans('frontend.contact.technical_consulting_text') ?></p>
             </div>
         </div>
     </div>
