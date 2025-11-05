@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Ana Sayfa - Polyurethane';
+$pageTitle = trans('frontend.home.page_title');
 
 $db = container()->get(App\Core\Database::class);
 
@@ -190,22 +190,22 @@ ob_start();
 <!-- Hero Section -->
 <section class="hero">
     <div class="container">
-        <h1>Premium Poliüretan Ürünler</h1>
-        <p>Mekanlarınıza estetik ve kalite katın. Duvar kaplamalarından profillere, geniş ürün yelpazesi.</p>
-        <a href="/products" class="btn">Ürünleri Keşfedin</a>
+        <h1><?= trans('frontend.home.hero_title') ?></h1>
+        <p><?= trans('frontend.home.hero_subtitle') ?></p>
+        <a href="/products" class="btn"><?= trans('frontend.home.explore_products') ?></a>
     </div>
 </section>
 
 <!-- Categories -->
 <section class="section">
     <div class="container">
-        <h2 class="section-title">Kategoriler</h2>
+        <h2 class="section-title"><?= trans('frontend.home.categories_title') ?></h2>
         <div class="categories-grid">
             <?php foreach ($categories as $category): ?>
                 <a href="/category/<?= htmlspecialchars($category['slug']) ?>" class="category-card">
                     <div class="category-icon"><?= htmlspecialchars($category['icon'] ?? '📦') ?></div>
                     <div class="category-name"><?= htmlspecialchars($category['name']) ?></div>
-                    <div class="category-count"><?= $category['product_count'] ?> ürün</div>
+                    <div class="category-count"><?= $category['product_count'] ?> <?= trans('frontend.home.product_count_suffix') ?></div>
                 </a>
             <?php endforeach; ?>
         </div>
@@ -215,10 +215,10 @@ ob_start();
 <!-- Featured Products -->
 <section class="section" style="background: var(--color-bg-gray); padding: 80px 0;">
     <div class="container">
-        <h2 class="section-title">Öne Çıkan Ürünler</h2>
+        <h2 class="section-title"><?= trans('frontend.home.featured_products') ?></h2>
 
         <?php if (empty($featuredProducts)): ?>
-            <p style="text-align: center; color: var(--color-text-light);">Henüz öne çıkan ürün yok</p>
+            <p style="text-align: center; color: var(--color-text-light);"><?= trans('frontend.home.no_featured_products') ?></p>
         <?php else: ?>
             <div class="products-grid">
                 <?php foreach ($featuredProducts as $product): ?>
@@ -239,9 +239,9 @@ ob_start();
 <!-- CTA Section -->
 <section class="cta-section">
     <div class="container">
-        <h2>B2B Müşteri misiniz?</h2>
-        <p>Toptan fiyatlar, özel indirimler ve kredi limiti için bayi başvurusu yapın</p>
-        <a href="/b2b" class="btn" style="background: white; color: var(--color-primary);">Bayi Başvurusu</a>
+        <h2><?= trans('frontend.home.b2b_cta_title') ?></h2>
+        <p><?= trans('frontend.home.b2b_cta_subtitle') ?></p>
+        <a href="/b2b" class="btn" style="background: white; color: var(--color-primary);"><?= trans('frontend.home.dealer_application') ?></a>
     </div>
 </section>
 

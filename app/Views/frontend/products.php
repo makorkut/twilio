@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Ürünler - Polyurethane';
+$pageTitle = trans('frontend.products.page_title');
 
 $db = container()->get(App\Core\Database::class);
 
@@ -130,15 +130,15 @@ ob_start();
 
 <div class="products-page">
     <div class="container">
-        <h1 style="font-size: 42px; font-weight: 300; margin-bottom: 40px;">Ürünler</h1>
+        <h1 style="font-size: 42px; font-weight: 300; margin-bottom: 40px;"><?= trans('frontend.products.heading') ?></h1>
 
         <div class="products-layout">
             <!-- Sidebar Filters -->
             <aside class="sidebar">
                 <div class="filter-section">
-                    <h3>Kategoriler</h3>
+                    <h3><?= trans('frontend.products.categories') ?></h3>
                     <ul class="filter-list">
-                        <li><a href="/products" class="<?= !$categoryId ? 'active' : '' ?>">Tümü</a></li>
+                        <li><a href="/products" class="<?= !$categoryId ? 'active' : '' ?>"><?= trans('frontend.products.all') ?></a></li>
                         <?php foreach ($categories as $category): ?>
                             <li>
                                 <a href="?category=<?= $category['id'] ?>"
@@ -157,20 +157,20 @@ ob_start();
             <!-- Products Grid -->
             <div>
                 <div class="products-header">
-                    <div class="products-count"><?= count($products) ?> ürün gösteriliyor</div>
+                    <div class="products-count"><?= count($products) ?> <?= trans('frontend.products.showing_count') ?></div>
                     <select class="sort-select" onchange="window.location.href='?sort=' + this.value + '&category=<?= $categoryId ?>'">
-                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>>Yeni Eklenenler</option>
-                        <option value="price_low" <?= $sortBy === 'price_low' ? 'selected' : '' ?>>Fiyat (Düşük - Yüksek)</option>
-                        <option value="price_high" <?= $sortBy === 'price_high' ? 'selected' : '' ?>>Fiyat (Yüksek - Düşük)</option>
-                        <option value="name" <?= $sortBy === 'name' ? 'selected' : '' ?>>İsim (A-Z)</option>
+                        <option value="newest" <?= $sortBy === 'newest' ? 'selected' : '' ?>><?= trans('frontend.products.sort_newest') ?></option>
+                        <option value="price_low" <?= $sortBy === 'price_low' ? 'selected' : '' ?>><?= trans('frontend.products.sort_price_low_high') ?></option>
+                        <option value="price_high" <?= $sortBy === 'price_high' ? 'selected' : '' ?>><?= trans('frontend.products.sort_price_high_low') ?></option>
+                        <option value="name" <?= $sortBy === 'name' ? 'selected' : '' ?>><?= trans('frontend.products.sort_name_az') ?></option>
                     </select>
                 </div>
 
                 <?php if (empty($products)): ?>
                     <div style="text-align: center; padding: 80px 0;">
                         <div style="font-size: 64px; margin-bottom: 24px;">📦</div>
-                        <h3 style="margin-bottom: 16px;">Ürün bulunamadı</h3>
-                        <p style="color: var(--color-text-light);">Aradığınız kriterlere uygun ürün yok</p>
+                        <h3 style="margin-bottom: 16px;"><?= trans('frontend.products.no_products_found') ?></h3>
+                        <p style="color: var(--color-text-light);"><?= trans('frontend.products.no_matching_products') ?></p>
                     </div>
                 <?php else: ?>
                     <div class="products-grid">

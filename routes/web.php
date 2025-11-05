@@ -1449,3 +1449,79 @@ $router->get('/wholesale', function() {
 $router->get('/catalog', function() {
     redirect('/admin/catalogs');
 });
+
+// ============================================================================
+// Admin Translations Routes
+// ============================================================================
+
+// Translations List
+$router->get('/admin/translations', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->list($request);
+});
+
+// Create Translation - Show Form
+$router->get('/admin/translations/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->create($request);
+});
+
+// Create Translation - Handle Form
+$router->post('/admin/translations/create', function() {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->create($request);
+});
+
+// Edit Translation - Show Form
+$router->get('/admin/translations/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->edit($request, ['id' => $id]);
+});
+
+// Edit Translation - Handle Form
+$router->post('/admin/translations/edit/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->edit($request, ['id' => $id]);
+});
+
+// Delete Translation
+$router->post('/admin/translations/delete/{id}', function($id) {
+    if (!App\Core\Auth::check()) {
+        redirect('/admin/login');
+    }
+
+    $db = container()->get(App\Core\Database::class);
+    $request = new App\Http\Request($_GET, $_POST, $_SERVER);
+    $controller = new App\Controllers\Admin\TranslationsController($db);
+    $controller->delete($request, ['id' => $id]);
+});

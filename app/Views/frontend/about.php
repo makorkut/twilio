@@ -1,6 +1,6 @@
 <?php
-$pageTitle = 'Hakkımızda - Polyurethane';
-$metaDescription = 'Polyurethane olarak yüksek kaliteli poliüretan ürünleri ile mekanlarınıza değer katıyoruz.';
+$pageTitle = trans('frontend.about.page_title');
+$metaDescription = trans('frontend.about.meta_description');
 
 ob_start();
 ?>
@@ -93,55 +93,55 @@ ob_start();
 <!-- Hero Section -->
 <section class="page-hero">
     <div class="container-narrow">
-        <h1>Hakkımızda</h1>
-        <p>Polyurethane olarak, yüksek kaliteli poliüretan ürünleri ile mekanlarınıza estetik ve değer katıyoruz. Yılların deneyimi ve uzman ekibimizle müşterilerimize en iyi hizmeti sunuyoruz.</p>
+        <h1><?= trans('frontend.about.heading') ?></h1>
+        <p><?= trans('frontend.about.hero_text') ?></p>
     </div>
 </section>
 
 <!-- Main Content -->
 <section class="content-section">
     <div class="container-narrow">
-        <h2>Misyonumuz</h2>
-        <p>Poliüretan sektöründe lider bir marka olarak, müşterilerimize en kaliteli ürünleri en uygun fiyatlarla sunmayı hedefliyoruz. Sürekli gelişen teknolojimiz ve geniş ürün yelpazemiz ile her türlü ihtiyaca çözüm üretiyoruz.</p>
+        <h2><?= trans('frontend.about.our_mission') ?></h2>
+        <p><?= trans('frontend.about.mission_text') ?></p>
 
-        <h2 style="margin-top: 60px;">Vizyonumuz</h2>
-        <p>Türkiye'nin önde gelen poliüretan tedarikçisi olarak, uluslararası standartlarda üretim yapan, müşteri memnuniyetini ön planda tutan ve sürdürülebilir büyümeyi hedefleyen bir firma olmayı amaçlıyoruz.</p>
+        <h2 style="margin-top: 60px;"><?= trans('frontend.about.our_vision') ?></h2>
+        <p><?= trans('frontend.about.vision_text') ?></p>
 
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">🏆</div>
-                <h3>Kalite Güvencesi</h3>
-                <p>Tüm ürünlerimiz kalite kontrolünden geçer ve garantilidir.</p>
+                <h3><?= trans('frontend.about.quality_assurance') ?></h3>
+                <p><?= trans('frontend.about.quality_assurance_text') ?></p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🚚</div>
-                <h3>Hızlı Teslimat</h3>
-                <p>Geniş stok kapasitemiz ile hızlı ve güvenilir teslimat.</p>
+                <h3><?= trans('frontend.about.fast_delivery') ?></h3>
+                <p><?= trans('frontend.about.fast_delivery_text') ?></p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">💡</div>
-                <h3>Profesyonel Destek</h3>
-                <p>Uzman ekibimiz her zaman yanınızda.</p>
+                <h3><?= trans('frontend.about.professional_support') ?></h3>
+                <p><?= trans('frontend.about.professional_support_text') ?></p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">📦</div>
-                <h3>Geniş Ürün Yelpazesi</h3>
-                <p>Duvar kaplamalarından profillere kadar çok çeşitli ürün seçenekleri.</p>
+                <h3><?= trans('frontend.about.wide_product_range') ?></h3>
+                <p><?= trans('frontend.about.wide_product_range_text') ?></p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🏢</div>
-                <h3>B2B Çözümler</h3>
-                <p>Toptan ve bayi satış için özel fiyatlar ve koşullar.</p>
+                <h3><?= trans('frontend.about.b2b_solutions') ?></h3>
+                <p><?= trans('frontend.about.b2b_solutions_text') ?></p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🔧</div>
-                <h3>Teknik Destek</h3>
-                <p>Montaj ve uygulama konusunda profesyonel danışmanlık.</p>
+                <h3><?= trans('frontend.about.technical_support') ?></h3>
+                <p><?= trans('frontend.about.technical_support_text') ?></p>
             </div>
         </div>
     </div>
