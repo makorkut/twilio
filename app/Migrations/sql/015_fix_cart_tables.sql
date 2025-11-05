@@ -1,23 +1,20 @@
 -- ============================================================================
 -- Migration 015: Fix Cart Tables Schema Mismatches
 -- Date: 2025-11-05
--- Description: Fix cart table naming and add missing columns
+-- Description: Add missing columns to cart and cart_items tables
 -- ============================================================================
 
 SET NAMES utf8mb4;
 
--- Rename cart to carts (if exists)
-SET @table_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cart');
-SET @sql = IF(@table_exists > 0, 'RENAME TABLE cart TO carts', 'SELECT "Table cart does not exist"');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- Add missing column to cart table (NOT carts - migration 010 creates "cart" table)
+ALTER TABLE cart
+ADD COLUMN IF NOT EXISTS coupon_id INT DEFAULT NULL COMMENT 'Applied coupon ID' AFTER currency_code;
 
--- Add missing column to carts table
-ALTER TABLE carts
-ADD COLUMN IF NOT EXISTS coupon_id INT DEFAULT NULL COMMENT 'Applied coupon ID' AFTER currency_code,
-ADD INDEX IF NOT EXISTS idx_coupon_id (coupon_id);
+CREATE INDEX IF NOT EXISTS idx_cart_coupon_id ON cart(coupon_id);
 
--- Fix cart_items column name (rename custom_options to options_json for consistency)
--- Note: We keep both for backward compatibility
+-- Add options_json column to cart_items (note: price column doesn't exist, using total_price)
 ALTER TABLE cart_items
-ADD COLUMN IF NOT EXISTS options_json JSON DEFAULT NULL COMMENT 'Cart item options' AFTER price;
+ADD COLUMN IF NOT EXISTS options_json JSON DEFAULT NULL COMMENT 'Cart item options (duplicate of custom_options for compatibility)' AFTER custom_options;
+
+-- Note: Migration 010 creates table named "cart" not "carts"
+-- Code should reference "cart" table, not "carts"
