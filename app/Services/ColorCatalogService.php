@@ -37,7 +37,7 @@ class ColorCatalogService
         }
 
         // Get next sort order
-        $result = $this->db->fetchOne(
+        $result = $this->db->fetch(
             "SELECT MAX(sort_order) as max_order FROM product_colors WHERE product_id = ?",
             [$productId]
         );
@@ -102,7 +102,7 @@ class ColorCatalogService
      */
     public function getColorById(int $colorId): ?array
     {
-        return $this->db->fetchOne(
+        return $this->db->fetch(
             "SELECT pc.*, p.name as product_name
              FROM product_colors pc
              LEFT JOIN products p ON pc.product_id = p.id
@@ -138,7 +138,7 @@ class ColorCatalogService
      */
     public function getRALColor(string $ralCode): ?array
     {
-        return $this->db->fetchOne(
+        return $this->db->fetch(
             "SELECT * FROM ral_colors WHERE ral_code = ?",
             [$ralCode]
         );

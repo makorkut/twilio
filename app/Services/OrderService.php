@@ -118,7 +118,8 @@ class OrderService
                     'status' => $status,
                     'updated_at' => date('Y-m-d H:i:s'),
                 ],
-                ['id' => $orderId]
+                'id = ?',
+                [$orderId]
             );
 
             // Add status history
@@ -164,7 +165,7 @@ class OrderService
             $updateData['payment_data_json'] = json_encode($paymentData);
         }
 
-        return $this->db->update('orders', $updateData, ['id' => $orderId]);
+        return $this->db->update('orders', $updateData, 'id = ?', [$orderId]);
     }
 
     /**
@@ -417,7 +418,8 @@ class OrderService
                     'shipping_tracking_number' => $trackingNumber,
                     'shipped_at' => date('Y-m-d H:i:s'),
                 ],
-                ['id' => $orderId]
+                'id = ?',
+                [$orderId]
             );
 
             // Update status

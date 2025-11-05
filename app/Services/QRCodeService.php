@@ -26,7 +26,7 @@ class QRCodeService
     public function generateForProduct(int $productId, array $options = []): string
     {
         // Get product details
-        $product = $this->db->fetchOne(
+        $product = $this->db->fetch(
             "SELECT * FROM products WHERE id = ?",
             [$productId]
         );
@@ -63,7 +63,7 @@ class QRCodeService
         ]);
 
         // Update product with QR code ID
-        $this->db->update('products', ['qrcode_id' => $qrCodeId], ['id' => $productId]);
+        $this->db->update('products', ['qrcode_id' => $qrCodeId], 'id = ?', [$productId]);
 
         return $filepath;
     }
@@ -162,7 +162,7 @@ class QRCodeService
      */
     public function getProductQRCode(int $productId): ?array
     {
-        return $this->db->fetchOne(
+        return $this->db->fetch(
             "SELECT * FROM product_qrcodes
              WHERE product_id = ?
              ORDER BY created_at DESC
@@ -210,7 +210,7 @@ class QRCodeService
      */
     public function delete(int $qrCodeId): bool
     {
-        $qrCode = $this->db->fetchOne(
+        $qrCode = $this->db->fetch(
             "SELECT * FROM product_qrcodes WHERE id = ?",
             [$qrCodeId]
         );
@@ -225,7 +225,7 @@ class QRCodeService
         }
 
         // Delete from database
-        return $this->db->delete('product_qrcodes', ['id' => $qrCodeId]);
+        return $this->db->delete('product_qrcodes', 'id = ?', [$qrCodeId]);
     }
 
     /**
@@ -324,11 +324,11 @@ class QRCodeService
         ];
 
         // Total QR codes
-        $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM product_qrcodes");
+        $result = $this->db->fetch("SELECT COUNT(*) as count FROM product_qrcodes");
         $stats['total_qrcodes'] = $result['count'] ?? 0;
 
         // Products with QR codes
-        $result = $this->db->fetchOne(
+        $result = $this->db->fetch(
             "SELECT COUNT(DISTINCT product_id) as count FROM product_qrcodes"
         );
         $stats['products_with_qr'] = $result['count'] ?? 0;
@@ -369,7 +369,7 @@ class QRCodeService
         $html .= '<div class="qr-grid">';
 
         foreach ($productIds as $productId) {
-            $product = $this->db->fetchOne("SELECT * FROM products WHERE id = ?", [$productId]);
+            $product = $this->db->fetch("SELECT * FROM products WHERE id = ?", [$productId]);
             if (!$product) continue;
 
             $qrCode = $this->getProductQRCode($productId);

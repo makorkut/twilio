@@ -54,7 +54,7 @@ class WebhookService
                 $updateData['error_message'] = $result['error'] ?? 'Unknown error';
             }
 
-            $this->db->update('webhook_events', $updateData, ['id' => $webhookId]);
+            $this->db->update('webhook_events', $updateData, 'id = ?', [$webhookId]);
 
             $this->db->commit();
 
@@ -127,7 +127,7 @@ class WebhookService
                 $updateData['error_message'] = $result['error'] ?? 'Processing failed';
             }
 
-            $this->db->update('webhook_events', $updateData, ['id' => $webhookId]);
+            $this->db->update('webhook_events', $updateData, 'id = ?', [$webhookId]);
 
             $this->db->commit();
 
@@ -247,7 +247,7 @@ class WebhookService
         $this->db->update('products', [
             'status' => 'deleted',
             'deleted_at' => date('Y-m-d H:i:s'),
-        ], ['id' => $productId]);
+        ], 'id = ?', [$productId]);
 
         return ['success' => true, 'product_id' => $productId];
     }
@@ -312,7 +312,7 @@ class WebhookService
         $this->db->update('orders', [
             'status' => $newStatus,
             'updated_at' => date('Y-m-d H:i:s'),
-        ], ['id' => $orderId]);
+        ], 'id = ?', [$orderId]);
 
         // Log status change
         $this->db->insert('order_status_history', [
@@ -482,7 +482,7 @@ class WebhookService
                     $updateData['error_message'] = $result['error'] ?? 'Retry failed';
                 }
 
-                $this->db->update('webhook_events', $updateData, ['id' => $webhook['id']]);
+                $this->db->update('webhook_events', $updateData, 'id = ?', [$webhook['id']]);
 
                 $results[] = [
                     'webhook_id' => $webhook['id'],

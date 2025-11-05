@@ -334,7 +334,7 @@ class PDFCatalogService
      */
     public function delete(int $catalogId): bool
     {
-        $catalog = $this->db->fetchOne(
+        $catalog = $this->db->fetch(
             "SELECT * FROM catalogs WHERE id = ?",
             [$catalogId]
         );

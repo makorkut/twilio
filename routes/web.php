@@ -381,7 +381,7 @@ $router->post('/admin/products/edit/{id}', function($id) {
         ];
 
         // Update product
-        $db->update('products', $data, ['id' => (int) $id]);
+        $db->update('products', $data, 'id = ?', [(int) $id]);
 
         // Update category assignment
         if (!empty($_POST['category_id'])) {
@@ -680,7 +680,7 @@ $router->post('/admin/customers/{id}/group', function($id) {
     if ($groupId) {
         $customerService->updateGroup((int) $id, $groupId);
     } else {
-        $db->update('users', ['customer_group_id' => null], ['id' => (int) $id]);
+        $db->update('users', ['customer_group_id' => null], 'id = ?', [(int) $id]);
     }
 
     $_SESSION['success_message'] = 'Müşteri grubu güncellendi!';
@@ -861,7 +861,7 @@ $router->post('/admin/samples/{id}/status', function($id) {
 
         // Update tracking number if provided
         if ($trackingNumber) {
-            $db->update('sample_orders', ['tracking_number' => $trackingNumber], ['id' => (int)$id]);
+            $db->update('sample_orders', ['tracking_number' => $trackingNumber], 'id = ?', [(int)$id]);
             if (!$note) {
                 $note = "Kargo takip no: {$trackingNumber}";
             }
@@ -927,7 +927,7 @@ $router->get('/admin/products/{id}/colors', function($id) {
     if (session_status() === PHP_SESSION_NONE) session_start();
 
     $db = container()->get(App\Core\Database::class);
-    $product = $db->fetchOne("SELECT * FROM products WHERE id = ?", [(int)$id]);
+    $product = $db->fetch("SELECT * FROM products WHERE id = ?", [(int)$id]);
 
     if (!$product) {
         $_SESSION['error_message'] = 'Ürün bulunamadı!';
@@ -1017,7 +1017,7 @@ $router->get('/admin/products/{id}/qrcode', function($id) {
     if (session_status() === PHP_SESSION_NONE) session_start();
 
     $db = container()->get(App\Core\Database::class);
-    $product = $db->fetchOne("SELECT * FROM products WHERE id = ?", [(int)$id]);
+    $product = $db->fetch("SELECT * FROM products WHERE id = ?", [(int)$id]);
 
     if (!$product) {
         $_SESSION['error_message'] = 'Ürün bulunamadı!';

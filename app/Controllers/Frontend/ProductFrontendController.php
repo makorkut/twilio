@@ -39,14 +39,14 @@ class ProductFrontendController
         $lang = $this->i18n->getCurrentLanguage();
 
         // Get category
-        $category = $this->db->query(
+        $category = $this->db->fetch(
             "SELECT c.*, cl.name, cl.description
              FROM categories c
              INNER JOIN category_lang cl ON cl.category_id = c.id AND cl.lang = ?
              WHERE cl.slug = ? AND c.status = 'active'
              LIMIT 1",
             [$lang, $categorySlug]
-        )[0] ?? null;
+        );
 
         if (!$category) {
             return Response::html('404', ['message' => 'Category not found'], 404);
@@ -57,7 +57,7 @@ class ProductFrontendController
         $perPage = 24;
         $offset = ($page - 1) * $perPage;
 
-        $products = $this->db->query(
+        $products = $this->db->fetchAll(
             "SELECT p.*, pl.name, pl.slug
              FROM products p
              INNER JOIN product_lang pl ON pl.product_id = p.id AND pl.lang = ?
@@ -85,7 +85,7 @@ class ProductFrontendController
         $lang = $this->i18n->getCurrentLanguage();
 
         // Get product
-        $product = $this->db->query(
+        $product = $this->db->fetch(
             "SELECT p.*, pl.name, pl.slug, pl.description, pl.short_description,
                     pl.technical_specs, pl.application_areas
              FROM products p
@@ -93,7 +93,7 @@ class ProductFrontendController
              WHERE pl.slug = ? AND p.status = 'active'
              LIMIT 1",
             [$lang, $productSlug]
-        )[0] ?? null;
+        );
 
         if (!$product) {
             return Response::html('404', ['message' => 'Product not found'], 404);

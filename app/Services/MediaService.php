@@ -222,17 +222,15 @@ class MediaService
      */
     public function detachFromEntity(int $mediaId, string $entityType, int $entityId, ?string $usageType = null): void
     {
-        $conditions = [
-            'media_id' => $mediaId,
-            'entity_type' => $entityType,
-            'entity_id' => $entityId,
-        ];
+        $where = 'media_id = ? AND entity_type = ? AND entity_id = ?';
+        $params = [$mediaId, $entityType, $entityId];
 
         if ($usageType) {
-            $conditions['usage_type'] = $usageType;
+            $where .= ' AND usage_type = ?';
+            $params[] = $usageType;
         }
 
-        $this->db->delete('media_usage', $conditions);
+        $this->db->delete('media_usage', $where, $params);
     }
 
     /**
@@ -291,10 +289,7 @@ class MediaService
      */
     public function detachTag(int $mediaId, int $tagId): void
     {
-        $this->db->delete('media_tag_relations', [
-            'media_id' => $mediaId,
-            'tag_id' => $tagId,
-        ]);
+        $this->db->delete('media_tag_relations', 'media_id = ? AND tag_id = ?', [$mediaId, $tagId]);
     }
 
     /**
@@ -584,7 +579,7 @@ class MediaService
             'deleted_at' => date('Y-m-d H:i:s'),
         ];
 
-        return $this->db->update('media', $updateData, ['id' => $mediaId]);
+        return $this->db->update('media', $updateData, 'id = ?', [$mediaId]);
     }
 
     /**
@@ -657,7 +652,7 @@ class MediaService
                     'status' => 'completed',
                     'completed_at' => date('Y-m-d H:i:s'),
                     'result' => json_encode(['media_id' => $mediaId]),
-                ], ['id' => $job['id']]);
+                ], 'id = ?', [$job['id']]);
 
                 $results[] = ['job_id' => $job['id'], 'media_id' => $mediaId, 'status' => 'success'];
             } catch (\Exception $e) {
@@ -670,7 +665,7 @@ class MediaService
                     'attempts' => $attempts,
                     'error_message' => $e->getMessage(),
                     'failed_at' => $status === 'failed' ? date('Y-m-d H:i:s') : null,
-                ], ['id' => $job['id']]);
+                ], 'id = ?', [$job['id']]);
 
                 $results[] = ['job_id' => $job['id'], 'status' => 'error', 'error' => $e->getMessage()];
             }

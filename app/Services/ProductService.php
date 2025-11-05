@@ -122,7 +122,7 @@ class ProductService
 
             // Update product record
             if (!empty($updateData)) {
-                $this->db->update('products', $updateData, ['id' => $productId]);
+                $this->db->update('products', $updateData, 'id = ?', [$productId]);
             }
 
             // Update translations if auto_update_title or auto_update_description is enabled
@@ -146,7 +146,7 @@ class ProductService
                 'sync_status' => 'synced',
                 'last_synced_at' => date('Y-m-d H:i:s'),
             ];
-            $this->db->update('products', $updateData, ['id' => $productId]);
+            $this->db->update('products', $updateData, 'id = ?', [$productId]);
 
             // Calculate new sync hash
             $this->updateSyncHash($productId);
@@ -325,10 +325,7 @@ class ProductService
         if (!empty($data)) {
             if (!empty($existing)) {
                 // Update existing
-                $this->db->update('product_lang', $data, [
-                    'product_id' => $productId,
-                    'lang' => $langCode
-                ]);
+                $this->db->update('product_lang', $data, 'product_id = ? AND lang = ?', [$productId, $langCode]);
 
                 // Track slug change for 301 redirects
                 if (isset($data['slug']) && $data['slug'] !== $existing[0]['slug']) {
@@ -389,10 +386,7 @@ class ProductService
         ];
 
         if (!empty($existing)) {
-            $this->db->update('product_prices_currency', $data, [
-                'product_id' => $productId,
-                'currency_code' => $currencyCode
-            ]);
+            $this->db->update('product_prices_currency', $data, 'product_id = ? AND currency_code = ?', [$productId, $currencyCode]);
         } else {
             $data['product_id'] = $productId;
             $data['currency_code'] = $currencyCode;
@@ -508,7 +502,7 @@ class ProductService
         $hash = hash('sha256', $hashData);
 
         // Update product
-        $this->db->update('products', ['sync_hash' => $hash], ['id' => $productId]);
+        $this->db->update('products', ['sync_hash' => $hash], 'id = ?', [$productId]);
     }
 
     /**
@@ -534,7 +528,7 @@ class ProductService
             'deleted_at' => date('Y-m-d H:i:s'),
         ];
 
-        return $this->db->update('products', $updateData, ['id' => $productId]);
+        return $this->db->update('products', $updateData, 'id = ?', [$productId]);
     }
 
     /**
