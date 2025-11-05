@@ -39,7 +39,7 @@ class CartService
     {
         $sessionId = $this->getOrCreateSession();
 
-        $sql = "SELECT * FROM carts WHERE ";
+        $sql = "SELECT * FROM cart WHERE ";
         if ($userId) {
             $sql .= "user_id = ? LIMIT 1";
             $params = [$userId];
@@ -60,7 +60,7 @@ class CartService
                 'created_at' => date('Y-m-d H:i:s'),
             ];
             $cartId = $this->db->insert('carts', $cartData);
-            $cart = $this->db->fetch("SELECT * FROM carts WHERE id = ?", [$cartId]);
+            $cart = $this->db->fetch("SELECT * FROM cart WHERE id = ?", [$cartId]);
         }
 
         // Get cart items
@@ -276,7 +276,7 @@ class CartService
 
         // Get guest cart
         $guestCart = $this->db->fetch(
-            "SELECT * FROM carts WHERE session_id = ? AND user_id IS NULL",
+            "SELECT * FROM cart WHERE session_id = ? AND user_id IS NULL",
             [$sessionId]
         );
 
@@ -286,7 +286,7 @@ class CartService
 
         // Get or create user cart
         $userCart = $this->db->fetch(
-            "SELECT * FROM carts WHERE user_id = ?",
+            "SELECT * FROM cart WHERE user_id = ?",
             [$userId]
         );
 
@@ -327,7 +327,7 @@ class CartService
         $this->db->beginTransaction();
 
         try {
-            $cart = $this->db->fetch("SELECT * FROM carts WHERE id = ?", [$cartId]);
+            $cart = $this->db->fetch("SELECT * FROM cart WHERE id = ?", [$cartId]);
             if (!$cart) {
                 throw new \Exception('Cart not found');
             }
