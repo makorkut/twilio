@@ -32,7 +32,7 @@ class SampleOrderService
         }
 
         // Check sample limits
-        $product = $this->db->fetchOne(
+        $product = $this->db->fetch(
             "SELECT * FROM products WHERE id = ?",
             [$data['product_id']]
         );
@@ -85,7 +85,7 @@ class SampleOrderService
     public function isEligibleForSamples(int $userId): bool
     {
         // Get user details
-        $user = $this->db->fetchOne(
+        $user = $this->db->fetch(
             "SELECT u.*, cg.allow_samples, cg.max_samples_per_month
              FROM users u
              LEFT JOIN customer_groups cg ON u.customer_group_id = cg.id
@@ -115,7 +115,7 @@ class SampleOrderService
     public function getMonthlyRequestCount(int $userId): int
     {
         $startOfMonth = date('Y-m-01 00:00:00');
-        $result = $this->db->fetchOne(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as count
              FROM sample_orders
              WHERE user_id = ? AND created_at >= ?",
@@ -141,7 +141,7 @@ class SampleOrderService
     private function calculateSampleShipping(array $data): float
     {
         // Get product weight/dimensions for shipping calculation
-        $product = $this->db->fetchOne(
+        $product = $this->db->fetch(
             "SELECT weight, length, width, height FROM products WHERE id = ?",
             [$data['product_id']]
         );
@@ -174,7 +174,8 @@ class SampleOrderService
                 'status' => $status,
                 'updated_at' => date('Y-m-d H:i:s')
             ],
-            ['id' => $sampleOrderId]
+            'id = ?',
+            [$sampleOrderId]
         );
 
         if ($updated) {
@@ -203,7 +204,7 @@ class SampleOrderService
      */
     public function getById(int $sampleOrderId): ?array
     {
-        $order = $this->db->fetchOne(
+        $order = $this->db->fetch(
             "SELECT so.*,
                     u.name as customer_name, u.email as customer_email, u.phone as customer_phone,
                     p.name as product_name, p.sku as product_sku, p.image as product_image,
@@ -295,7 +296,7 @@ class SampleOrderService
         ];
 
         // Total count
-        $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM sample_orders");
+        $result = $this->db->fetch("SELECT COUNT(*) as count FROM sample_orders");
         $stats['total'] = $result['count'] ?? 0;
 
         // Count by status
@@ -335,7 +336,8 @@ class SampleOrderService
             $this->db->update(
                 'sample_orders',
                 ['tracking_number' => $trackingNumber],
-                ['id' => $sampleOrderId]
+                'id = ?',
+                [$sampleOrderId]
             );
             $this->updateStatus($sampleOrderId, 'shipped', "Kargo takip no: {$trackingNumber}");
         }

@@ -10,6 +10,12 @@ use App\Http\Response;
 class Router
 {
     protected array $routes = [];
+    protected ?Container $container = null;
+
+    public function __construct(?Container $container = null)
+    {
+        $this->container = $container;
+    }
 
     public function get(string $path, $handler): void
     {
@@ -78,7 +84,14 @@ class Router
         if (is_array($handler)) {
             // Controller@method format
             [$controller, $method] = $handler;
-            $instance = new $controller();
+
+            // Use container for dependency injection if available
+            if ($this->container) {
+                $instance = $this->container->get($controller);
+            } else {
+                $instance = new $controller();
+            }
+
             return $instance->$method($request, ...$params);
         }
 

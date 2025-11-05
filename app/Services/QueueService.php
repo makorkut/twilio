@@ -84,7 +84,7 @@ class QueueService
         $this->db->update('queue_jobs', [
             'status' => 'processing',
             'started_at' => date('Y-m-d H:i:s'),
-        ], ['id' => $jobId]);
+        ], 'id = ?', [$jobId]);
 
         try {
             $payload = json_decode($job['payload'], true);
@@ -97,7 +97,7 @@ class QueueService
                 'status' => 'completed',
                 'result' => json_encode($result),
                 'completed_at' => date('Y-m-d H:i:s'),
-            ], ['id' => $jobId]);
+            ], 'id = ?', [$jobId]);
 
             return [
                 'job_id' => $jobId,
@@ -116,7 +116,7 @@ class QueueService
                 'attempts' => $attempts,
                 'error_message' => $e->getMessage(),
                 'failed_at' => $status === 'failed' ? date('Y-m-d H:i:s') : null,
-            ], ['id' => $jobId]);
+            ], 'id = ?', [$jobId]);
 
             return [
                 'job_id' => $jobId,
@@ -301,7 +301,7 @@ class QueueService
         if (!empty($existing)) {
             // Update
             $categoryId = (int) $existing[0]['id'];
-            $this->db->update('categories', $categoryData, ['id' => $categoryId]);
+            $this->db->update('categories', $categoryData, 'id = ?', [$categoryId]);
             $operation = 'updated';
         } else {
             // Create
@@ -496,7 +496,7 @@ class QueueService
             'attempts' => 0,
             'error_message' => null,
             'failed_at' => null,
-        ], ['id' => $jobId]);
+        ], 'id = ?', [$jobId]);
 
         // Process immediately
         return $this->processJob($jobId);
@@ -567,6 +567,6 @@ class QueueService
     {
         return $this->db->update('queue_jobs', [
             'status' => 'cancelled',
-        ], ['id' => $jobId]);
+        ], 'id = ?', [$jobId]);
     }
 }

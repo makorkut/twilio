@@ -129,7 +129,8 @@ class CartService
             $newQuantity = $existingItem['quantity'] + $quantity;
             $this->db->update('cart_items',
                 ['quantity' => $newQuantity],
-                ['id' => $existingItem['id']]
+                'id = ?',
+                [$existingItem['id']]
             );
             return (int) $existingItem['id'];
         } else {
@@ -174,7 +175,8 @@ class CartService
 
         return $this->db->update('cart_items',
             ['quantity' => $quantity],
-            ['id' => $itemId]
+            'id = ?',
+            [$itemId]
         );
     }
 
@@ -183,7 +185,7 @@ class CartService
      */
     public function removeItem(int $itemId): bool
     {
-        return $this->db->delete('cart_items', ['id' => $itemId]);
+        return $this->db->delete('cart_items', 'id = ?', [$itemId]);
     }
 
     /**
@@ -192,7 +194,7 @@ class CartService
     public function clearCart(?int $userId = null): bool
     {
         $cart = $this->getCart($userId);
-        return $this->db->delete('cart_items', ['cart_id' => $cart['id']]);
+        return $this->db->delete('cart_items', 'cart_id = ?', [$cart['id']]);
     }
 
     /**
@@ -260,7 +262,8 @@ class CartService
         // Apply coupon to cart
         return $this->db->update('carts',
             ['coupon_id' => $coupon['id']],
-            ['id' => $cart['id']]
+            'id = ?',
+            [$cart['id']]
         );
     }
 
@@ -291,7 +294,8 @@ class CartService
             // Convert guest cart to user cart
             $this->db->update('carts',
                 ['user_id' => $userId],
-                ['id' => $guestCart['id']]
+                'id = ?',
+                [$guestCart['id']]
             );
         } else {
             // Merge items
@@ -310,8 +314,8 @@ class CartService
             }
 
             // Delete guest cart
-            $this->db->delete('cart_items', ['cart_id' => $guestCart['id']]);
-            $this->db->delete('carts', ['id' => $guestCart['id']]);
+            $this->db->delete('cart_items', 'cart_id = ?', [$guestCart['id']]);
+            $this->db->delete('carts', 'id = ?', [$guestCart['id']]);
         }
     }
 
@@ -359,10 +363,11 @@ class CartService
             }
 
             // Clear cart
-            $this->db->delete('cart_items', ['cart_id' => $cartId]);
+            $this->db->delete('cart_items', 'cart_id = ?', [$cartId]);
             $this->db->update('carts',
                 ['status' => 'converted'],
-                ['id' => $cartId]
+                'id = ?',
+                [$cartId]
             );
 
             $this->db->commit();

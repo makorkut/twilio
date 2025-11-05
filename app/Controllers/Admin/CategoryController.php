@@ -21,7 +21,7 @@ class CategoryController
     {
         $type = $request->get('type', 'product');
 
-        $categories = $this->db->query(
+        $categories = $this->db->fetchAll(
             "SELECT c.*, cl.name, cl.slug, cl.description,
                     COUNT(DISTINCT p.id) as product_count
              FROM categories c
@@ -38,16 +38,16 @@ class CategoryController
 
     public function show(Request $request, int $id): Response
     {
-        $category = $this->db->query(
+        $category = $this->db->fetch(
             "SELECT * FROM categories WHERE id = ? LIMIT 1",
             [$id]
-        )[0] ?? null;
+        );
 
         if (!$category) {
             return Response::json(['error' => 'Category not found'], 404);
         }
 
-        $translations = $this->db->query(
+        $translations = $this->db->fetchAll(
             "SELECT * FROM category_lang WHERE category_id = ?",
             [$id]
         );
@@ -110,7 +110,7 @@ class CategoryController
 
             if (!empty($updateData)) {
                 $updateData['updated_at'] = date('Y-m-d H:i:s');
-                $this->db->update('categories', $updateData, ['id' => $id]);
+                $this->db->update('categories', $updateData, 'id = ?', [$id]);
             }
 
             // Update translations
@@ -145,7 +145,7 @@ class CategoryController
         try {
             $this->db->update('categories', [
                 'deleted_at' => date('Y-m-d H:i:s'),
-            ], ['id' => $id]);
+            ], 'id = ?', [$id]);
 
             return Response::json(['success' => true, 'message' => 'Category deleted successfully']);
         } catch (\Exception $e) {
@@ -157,7 +157,7 @@ class CategoryController
     {
         $type = $request->get('type', 'product');
 
-        $categories = $this->db->query(
+        $categories = $this->db->fetchAll(
             "SELECT c.*, cl.name
              FROM categories c
              LEFT JOIN category_lang cl ON cl.category_id = c.id AND cl.lang = ?

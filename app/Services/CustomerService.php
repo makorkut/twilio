@@ -167,7 +167,7 @@ class CustomerService
                 'is_default' => $data['is_default'] ?? 0,
             ];
 
-            $this->db->update('user_addresses', $updateData, ['id' => $addressId]);
+            $this->db->update('user_addresses', $updateData, 'id = ?', [$addressId]);
 
             $this->db->commit();
 
@@ -183,7 +183,7 @@ class CustomerService
      */
     public function deleteAddress(int $addressId): bool
     {
-        return $this->db->delete('user_addresses', ['id' => $addressId]);
+        return $this->db->delete('user_addresses', 'id = ?', [$addressId]);
     }
 
     /**
@@ -193,7 +193,8 @@ class CustomerService
     {
         return $this->db->update('users',
             ['customer_group_id' => $customerGroupId],
-            ['id' => $userId]
+            'id = ?',
+            [$userId]
         );
     }
 
@@ -214,7 +215,7 @@ class CustomerService
         ];
 
         if ($existing) {
-            return $this->db->update('customer_credit', $data, ['user_id' => $userId]);
+            return $this->db->update('customer_credit', $data, 'user_id = ?', [$userId]);
         } else {
             $data['user_id'] = $userId;
             $data['credit_used'] = 0;

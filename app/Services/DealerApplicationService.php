@@ -27,7 +27,7 @@ class DealerApplicationService
         }
 
         // Check for duplicate application (same email or company)
-        $existing = $this->db->fetchOne(
+        $existing = $this->db->fetch(
             "SELECT id FROM dealer_applications
              WHERE email = ? OR company_name = ?
              AND status IN ('pending', 'under_review', 'approved')
@@ -102,7 +102,8 @@ class DealerApplicationService
                 'reviewed_by' => $_SESSION['user_id'] ?? null,
                 'updated_at' => date('Y-m-d H:i:s')
             ],
-            ['id' => $applicationId]
+            'id = ?',
+            [$applicationId]
         );
 
         if ($updated) {
@@ -142,7 +143,7 @@ class DealerApplicationService
         }
 
         // Check if dealer account already exists
-        $existingDealer = $this->db->fetchOne(
+        $existingDealer = $this->db->fetch(
             "SELECT id FROM dealers WHERE email = ?",
             [$application['email']]
         );
@@ -179,7 +180,7 @@ class DealerApplicationService
         $prefix = substr($words[0] ?? 'DEA', 0, 3);
 
         // Add sequential number
-        $lastDealer = $this->db->fetchOne(
+        $lastDealer = $this->db->fetch(
             "SELECT dealer_code FROM dealers WHERE dealer_code LIKE ? ORDER BY id DESC LIMIT 1",
             [$prefix . '%']
         );
@@ -198,7 +199,7 @@ class DealerApplicationService
      */
     public function getById(int $applicationId): ?array
     {
-        $application = $this->db->fetchOne(
+        $application = $this->db->fetch(
             "SELECT da.*, u.name as reviewed_by_name
              FROM dealer_applications da
              LEFT JOIN users u ON da.reviewed_by = u.id
@@ -279,7 +280,7 @@ class DealerApplicationService
         ];
 
         // Total count
-        $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM dealer_applications");
+        $result = $this->db->fetch("SELECT COUNT(*) as count FROM dealer_applications");
         $stats['total'] = $result['count'] ?? 0;
 
         // Count by status
@@ -297,7 +298,7 @@ class DealerApplicationService
 
         // Approved this month
         $startOfMonth = date('Y-m-01 00:00:00');
-        $result = $this->db->fetchOne(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as count
              FROM dealer_applications
              WHERE status = 'approved' AND updated_at >= ?",

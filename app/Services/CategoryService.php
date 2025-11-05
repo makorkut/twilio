@@ -123,7 +123,7 @@ class CategoryService
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
 
-            $this->db->update('categories', $updateData, ['id' => $id]);
+            $this->db->update('categories', $updateData, 'id = ?', [$id]);
 
             // Update translations
             if (!empty($data['translations'])) {
@@ -141,10 +141,7 @@ class CategoryService
                     ];
 
                     if ($existing) {
-                        $this->db->update('category_translations', $transData, [
-                            'category_id' => $id,
-                            'lang_code' => $langCode
-                        ]);
+                        $this->db->update('category_translations', $transData, 'category_id = ? AND lang_code = ?', [$id, $langCode]);
                     } else {
                         $transData['category_id'] = $id;
                         $transData['lang_code'] = $langCode;
@@ -187,7 +184,7 @@ class CategoryService
             throw new \Exception('Cannot delete category with products. Remove products first.');
         }
 
-        return $this->db->delete('categories', ['id' => $id]);
+        return $this->db->delete('categories', 'id = ?', [$id]);
     }
 
     /**
@@ -270,7 +267,8 @@ class CategoryService
 
         $this->db->update('categories',
             ['product_count' => $count['count']],
-            ['id' => $categoryId]
+            'id = ?',
+            [$categoryId]
         );
     }
 

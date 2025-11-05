@@ -46,7 +46,7 @@ class OrderController
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
 
-        $orders = $this->db->query(
+        $orders = $this->db->fetchAll(
             "SELECT o.*, u.name as customer_name, u.email as customer_email
              FROM orders o
              LEFT JOIN users u ON u.id = o.user_id
@@ -56,10 +56,11 @@ class OrderController
             array_merge($params, [$perPage, $offset])
         );
 
-        $total = $this->db->query(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as total FROM orders o LEFT JOIN users u ON u.id = o.user_id {$whereClause}",
             $params
-        )[0]['total'];
+        );
+        $total = $result['total'];
 
         return Response::json([
             'success' => true,
@@ -75,21 +76,21 @@ class OrderController
 
     public function show(Request $request, int $id): Response
     {
-        $order = $this->db->query(
+        $order = $this->db->fetch(
             "SELECT o.*, u.name as customer_name, u.email as customer_email
              FROM orders o
              LEFT JOIN users u ON u.id = o.user_id
              WHERE o.id = ?
              LIMIT 1",
             [$id]
-        )[0] ?? null;
+        );
 
         if (!$order) {
             return Response::json(['error' => 'Order not found'], 404);
         }
 
         // Get order items
-        $order['items'] = $this->db->query(
+        $order['items'] = $this->db->fetchAll(
             "SELECT oi.*, p.sku, pl.name as product_name
              FROM order_items oi
              LEFT JOIN products p ON p.id = oi.product_id
@@ -99,7 +100,7 @@ class OrderController
         );
 
         // Get status history
-        $order['status_history'] = $this->db->query(
+        $order['status_history'] = $this->db->fetchAll(
             "SELECT * FROM order_status_history WHERE order_id = ? ORDER BY created_at DESC",
             [$id]
         );
@@ -138,7 +139,7 @@ class OrderController
 
     public function statistics(Request $request): Response
     {
-        $stats = $this->db->query(
+        $stats = $this->db->fetch(
             "SELECT
                 COUNT(*) as total_orders,
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -151,6 +152,6 @@ class OrderController
              WHERE deleted_at IS NULL"
         );
 
-        return Response::json(['success' => true, 'data' => $stats[0]]);
+        return Response::json(['success' => true, 'data' => $stats]);
     }
 }

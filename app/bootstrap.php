@@ -40,8 +40,8 @@ return function (Container $container): void {
         }
     });
 
-    $container->singleton(Router::class, function () {
-        return new Router();
+    $container->singleton(Router::class, function (Container $c) {
+        return new Router($c);
     });
 
     $container->bind(Request::class, function () {

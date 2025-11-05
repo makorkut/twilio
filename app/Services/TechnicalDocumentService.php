@@ -143,7 +143,7 @@ class TechnicalDocumentService
     public function delete(int $documentId): bool
     {
         // Get document info
-        $document = $this->db->fetchOne(
+        $document = $this->db->fetch(
             "SELECT * FROM technical_documents WHERE id = ?",
             [$documentId]
         );
@@ -166,7 +166,7 @@ class TechnicalDocumentService
      */
     public function getById(int $documentId): ?array
     {
-        return $this->db->fetchOne(
+        return $this->db->fetch(
             "SELECT td.*, u.name as uploaded_by_name, p.name as product_name
              FROM technical_documents td
              LEFT JOIN users u ON td.uploaded_by = u.id
@@ -232,7 +232,7 @@ class TechnicalDocumentService
         ];
 
         // Total count
-        $result = $this->db->fetchOne("SELECT COUNT(*) as count FROM technical_documents");
+        $result = $this->db->fetch("SELECT COUNT(*) as count FROM technical_documents");
         $stats['total'] = $result['count'] ?? 0;
 
         // Count by type
@@ -246,7 +246,7 @@ class TechnicalDocumentService
         }
 
         // Total file size
-        $result = $this->db->fetchOne("SELECT SUM(file_size) as total_size FROM technical_documents");
+        $result = $this->db->fetch("SELECT SUM(file_size) as total_size FROM technical_documents");
         $stats['total_size'] = $result['total_size'] ?? 0;
 
         // Recent uploads

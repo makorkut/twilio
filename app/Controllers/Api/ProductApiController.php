@@ -69,7 +69,7 @@ class ProductApiController
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
 
-        $products = $this->db->query(
+        $products = $this->db->fetchAll(
             "SELECT p.*, pl.name, pl.slug, pl.short_description,
                     ppc.base_price, ppc.compare_at_price, ppc.currency_code
              FROM products p
@@ -82,13 +82,14 @@ class ProductApiController
         );
 
         // Get total
-        $total = $this->db->query(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as total
              FROM products p
              LEFT JOIN product_lang pl ON pl.product_id = p.id AND pl.lang = ?
              {$whereClause}",
             array_merge([$lang], $params)
-        )[0]['total'];
+        );
+        $total = $result['total'];
 
         // Add media to each product
         foreach ($products as &$product) {
@@ -120,7 +121,7 @@ class ProductApiController
         $lang = $this->i18n->getCurrentLanguage();
         $currency = $request->get('currency', env('DEFAULT_CURRENCY', 'TRY'));
 
-        $product = $this->db->query(
+        $product = $this->db->fetch(
             "SELECT p.*, pl.name, pl.slug, pl.short_description, pl.description,
                     pl.technical_specs, pl.application_areas,
                     ppc.base_price, ppc.compare_at_price, ppc.currency_code,
@@ -133,7 +134,7 @@ class ProductApiController
              WHERE pl.slug = ? AND p.status = 'active' AND p.deleted_at IS NULL
              LIMIT 1",
             [$lang, $currency, $slug]
-        )[0] ?? null;
+        );
 
         if (!$product) {
             return Response::json(['error' => 'Product not found'], 404);

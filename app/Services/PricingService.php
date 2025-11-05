@@ -222,11 +222,7 @@ class PricingService
         $existing = $this->getCustomerGroupPrice($productId, $customerGroupId, $currencyCode);
 
         if ($existing) {
-            $this->db->update('customer_group_prices', ['price' => $price], [
-                'customer_group_id' => $customerGroupId,
-                'product_id' => $productId,
-                'currency_code' => $currencyCode,
-            ]);
+            $this->db->update('customer_group_prices', ['price' => $price], 'customer_group_id = ? AND product_id = ? AND currency_code = ?', [$customerGroupId, $productId, $currencyCode]);
         } else {
             $this->db->insert('customer_group_prices', $data);
         }
@@ -461,7 +457,7 @@ class PricingService
 
         return $this->db->update('users', [
             'credit_used' => $newCreditUsed,
-        ], ['id' => $userId]);
+        ], 'id = ?', [$userId]);
     }
 
     /**
