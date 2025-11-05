@@ -205,7 +205,7 @@ class I18nService
      */
     public function getAvailableLanguages(): array
     {
-        return $this->db->query(
+        return $this->db->fetchAll(
             "SELECT * FROM languages WHERE status = 1 ORDER BY language_order ASC"
         );
     }
@@ -224,12 +224,10 @@ class I18nService
      */
     public function getLanguageById(int $langId): ?array
     {
-        $result = $this->db->query(
+        return $this->db->fetch(
             "SELECT * FROM languages WHERE id = ? LIMIT 1",
             [$langId]
         );
-
-        return $result[0] ?? null;
     }
 
     /**
@@ -237,12 +235,10 @@ class I18nService
      */
     public function getLanguageByCode(string $shortCode): ?array
     {
-        $result = $this->db->query(
+        return $this->db->fetch(
             "SELECT * FROM languages WHERE short_form = ? LIMIT 1",
             [$shortCode]
         );
-
-        return $result[0] ?? null;
     }
 
     /**
@@ -252,6 +248,24 @@ class I18nService
     {
         $lang = $this->getLanguageByCode($shortCode);
         return $lang ? (int) $lang['id'] : $this->fallbackLangId;
+    }
+
+    /**
+     * Detect language ID from URL path
+     * Extracts language code from paths like /en/products or /tr/kategoriler
+     *
+     * @param string $path URL path (e.g., "/en/products", "/tr/urunler")
+     * @return int|null Language ID if found in path, null otherwise
+     */
+    public function getLanguageFromPath(string $path): ?int
+    {
+        // Extract language code from path (e.g., /en/, /tr/)
+        if (preg_match('/^\/([a-z]{2})(?:\/|$)/i', $path, $matches)) {
+            $code = strtolower($matches[1]);
+            $lang = $this->getLanguageByCode($code);
+            return $lang ? (int) $lang['id'] : null;
+        }
+        return null;
     }
 
     /**
@@ -265,13 +279,13 @@ class I18nService
         }
 
         // Check if key exists
-        $existing = $this->db->query(
+        $existing = $this->db->fetch(
             "SELECT id FROM i18n_keys WHERE key_name = ? LIMIT 1",
             [$keyName]
         );
 
-        if (!empty($existing)) {
-            return (int) $existing[0]['id'];
+        if ($existing) {
+            return (int) $existing['id'];
         }
 
         $data = [
@@ -294,20 +308,17 @@ class I18nService
         $keyId = $this->createKey($keyName);
 
         // Check if value exists
-        $existing = $this->db->query(
+        $existing = $this->db->fetch(
             "SELECT id FROM i18n_values WHERE key_id = ? AND lang_id = ? LIMIT 1",
             [$keyId, $langId]
         );
 
-        if (!empty($existing)) {
+        if ($existing) {
             // Update existing
             $this->db->update('i18n_values', [
                 'value' => $value,
                 'updated_at' => date('Y-m-d H:i:s'),
-            ], [
-                'key_id' => $keyId,
-                'lang_id' => $langId,
-            ]);
+            ], 'key_id = ? AND lang_id = ?', [$keyId, $langId]);
         } else {
             // Insert new
             $this->db->insert('i18n_values', [
@@ -327,7 +338,7 @@ class I18nService
      */
     public function getKeyTranslations(string $keyName): array
     {
-        $result = $this->db->query(
+        $results = $this->db->fetchAll(
             "SELECT v.lang_id, v.value, l.short_form, l.name
              FROM i18n_keys k
              INNER JOIN i18n_values v ON v.key_id = k.id
@@ -337,7 +348,7 @@ class I18nService
         );
 
         $translations = [];
-        foreach ($result as $row) {
+        foreach ($results as $row) {
             $translations[$row['lang_id']] = [
                 'lang_id' => $row['lang_id'],
                 'short_form' => $row['short_form'],
@@ -354,7 +365,7 @@ class I18nService
      */
     public function getGroupKeys(string $group): array
     {
-        return $this->db->query(
+        return $this->db->fetchAll(
             "SELECT * FROM i18n_keys WHERE `group` = ? ORDER BY key_name ASC",
             [$group]
         );
@@ -402,7 +413,7 @@ class I18nService
 
         $query .= " ORDER BY k.key_name ASC";
 
-        $results = $this->db->query($query, $params);
+        $results = $this->db->fetchAll($query, $params);
 
         $translations = [];
         foreach ($results as $row) {
@@ -417,7 +428,7 @@ class I18nService
      */
     public function getMissingTranslations(int $langId): array
     {
-        $results = $this->db->query(
+        return $this->db->fetchAll(
             "SELECT k.*
              FROM i18n_keys k
              LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
@@ -426,8 +437,6 @@ class I18nService
              ORDER BY k.`group` ASC, k.key_name ASC",
             [$langId]
         );
-
-        return $results;
     }
 
     /**
@@ -435,15 +444,16 @@ class I18nService
      */
     public function getCompletionPercentage(int $langId): float
     {
-        $totalKeys = $this->db->query(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as count FROM i18n_keys WHERE is_active = 1"
-        )[0]['count'];
+        );
+        $totalKeys = $result['count'] ?? 0;
 
         if ($totalKeys == 0) {
             return 100;
         }
 
-        $translatedKeys = $this->db->query(
+        $result = $this->db->fetch(
             "SELECT COUNT(*) as count
              FROM i18n_keys k
              INNER JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?
@@ -451,7 +461,8 @@ class I18nService
              AND v.value IS NOT NULL
              AND v.value != ''",
             [$langId]
-        )[0]['count'];
+        );
+        $translatedKeys = $result['count'] ?? 0;
 
         return ($translatedKeys / $totalKeys) * 100;
     }
@@ -484,7 +495,7 @@ class I18nService
     {
         $langId = $langId ?? $this->currentLangId;
 
-        return $this->db->query(
+        return $this->db->fetchAll(
             "SELECT k.key_name, k.`group`, v.value
              FROM i18n_keys k
              LEFT JOIN i18n_values v ON v.key_id = k.id AND v.lang_id = ?

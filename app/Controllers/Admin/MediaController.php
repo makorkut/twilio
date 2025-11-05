@@ -88,7 +88,8 @@ class MediaController
                        {$whereClause}";
 
         $countParams = array_merge([$langParam], $params);
-        $total = $this->db->query($countQuery, $countParams)[0]['total'];
+        $countResult = $this->db->fetch($countQuery, $countParams);
+        $total = $countResult['total'] ?? 0;
 
         return Response::json([
             'success' => true,
