@@ -83,14 +83,14 @@ try {
     // Show error page
     http_response_code(500);
 
-    if ($_ENV['APP_DEBUG'] === 'true') {
-        echo '<h1>Application Error</h1>';
-        echo '<pre>' . htmlspecialchars($e->getMessage()) . '</pre>';
-        echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-    } else {
-        echo '<h1>500 - Internal Server Error</h1>';
-        echo '<p>Something went wrong. Please try again later.</p>';
-    }
+    // TEMPORARY: Always show error for debugging
+    echo '<h1>Application Error</h1>';
+    echo '<h2>Error Message:</h2>';
+    echo '<pre>' . htmlspecialchars($e->getMessage()) . '</pre>';
+    echo '<h2>File:</h2>';
+    echo '<pre>' . htmlspecialchars($e->getFile() . ':' . $e->getLine()) . '</pre>';
+    echo '<h2>Stack Trace:</h2>';
+    echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
 
     exit(1);
 }
